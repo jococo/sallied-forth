@@ -1,0 +1,16 @@
+{
+  "name": "ForthAsm",
+  "version": "0.0.1",
+  "description": "Great big Forth for Asm.js",
+  "main": "forthasm.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "forth",
+    "asmjs",
+    "js"
+  ],
+  "author": "Joc",
+  "license": "MIT"
+}
