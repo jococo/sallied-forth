@@ -293,12 +293,17 @@ describe("The Interpreter", function() {
     // Command object into it's function.
     describe(">CFA", function() {
 
-      it("returns the function ref for a found word", function() {
+      it("returns the function ref for a found word.", function() {
         result = itp.interpret('word dup find >cfa .');
         expect(result).toBeDefined();
       });
 
-    })
+      it("fails silently if no defn object is available.", function() {
+        result = itp.interpret('1 2 3 >cfa .s');
+        expect(result).toBe('[1,2,3]');
+      });
+
+    });
 
   });
 

@@ -228,7 +228,11 @@
     // convert the definition object to it's function
     this.addToDictionary('>cfa', function() {
       var defn = self.popFromDataStack();
-      self.pushToDataStack( defn.fn );
+      if( defn.fn ) {
+        self.pushToDataStack( defn.fn );
+      } else { // probably not a defn, push it back
+        self.pushToDataStack( defn );
+      }
     });
 
     this.addToDictionary("'", function() {
