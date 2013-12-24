@@ -23,6 +23,9 @@
     this.returnStack = [];
     this.dictionary = undefined;
     this.dictionaryHead = undefined;
+
+    this.valueStore = {};
+
     this.version = {
       major: 0,
       minor: 0,
@@ -39,6 +42,11 @@
 
     this.log = function(txt) {
       self.logFn && self.logFn( txt );
+      return void 0;
+    };
+
+    this.error = function( txt ) {
+      self.errorFn && self.errorFn( txt );
       return void 0;
     };
 
@@ -60,6 +68,14 @@
       } else {
         self.dictionary = self.dictionaryHead = {name: name, fn: fn, immediate: !!imm};
       }
+    };
+
+    this.setValue = function( name, value ) {
+      this.valueStore[name] = value;
+    };
+
+    this.getValue = function( name ) {
+      return this.valueStore[name];
     };
 
     this.findDefn = function( head, name ) {
@@ -91,19 +107,15 @@
 
     this.execute = function() {
       var args = Array.prototype.slice.call(arguments);
-      try {
-        var allFunctions = args.map(function(name) {
-          var defn = self.findDefinition( name );
-          if( defn ) {
-            return defn.fn;
-          } else {
-            throw('Function ' + name + ' not found!');
-          }
-        });
-        self.executeFunctions.apply( undefined, allFunctions );
-      } catch (err) {
-        console.error(err);
-      }
+      var allFunctions = args.map(function(name) {
+        var defn = self.findDefinition( name );
+        if( defn ) {
+          return defn.fn;
+        } else {
+          throw('Function ' + name + ' not found!');
+        }
+      });
+      self.executeFunctions.apply( undefined, allFunctions );
     };
 
     this.addToDictionary('.', function() {
@@ -201,8 +213,6 @@
       }
     });
 
-
-
     // take the next word from the command stack and put it onto the data stack as a string
     this.addToDictionary('word', function() {
       var val = self.commands.shift();
@@ -235,18 +245,41 @@
       }
     });
 
+    this.addToDictionary('!', function() {
+      if( self.dataStack.length > 1 ) {
+        var value = self.popFromDataStack();
+        var name = self.popFromDataStack();
+        self.setValue(name, value);
+      } else {
+        self.error( '! needs a name and value' );
+      }
+    });
+
+    this.addToDictionary('@', function() {
+      if( self.dataStack.length > 0 ) {
+        var name = self.popFromDataStack();
+        self.pushToDataStack( self.getValue(name) );
+      }
+       else {
+        self.error("@ needs a name input");
+      }
+    });
+
     this.addToDictionary("'", function() {
       self.execute('word', 'find', '>cfa'); // , 'next' TODO find out what 'next' does.
     });
 
     this.addToDictionary('create', function() {
       if(self.newCommand) {
-        throw('Already compiling ' + self.newCommand.name + '!');
+        self.error('Already compiling ' + self.newCommand.name + '!');
       }
-
-      // get the object ready
-      var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self.execute );
-      self.newCommand =  cmd;
+      if( self.dataStack.length > 0) {
+        // get the object ready
+        var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self.execute );
+        self.newCommand =  cmd;
+        return;
+      }
+      self.error("CREATE needs a name.");
     });
 
     this.addToDictionary('[', function() {
@@ -255,7 +288,7 @@
 
     this.addToDictionary(']', function() {
       self.compilationMode = false;
-    });
+    }, true);
 
     this.addToDictionary(';', function() {
       self.execute(']');
@@ -278,33 +311,29 @@
 
     this.processCommands = function() {
       var nextCommand;
-      try {
-        while( nextCommand = self.commands.shift() ) {
-          if( nextCommand ) {
-            var flN = parseFloat(nextCommand);
-            if( isNaN(flN) ) {
-              if( self.compilationMode ) {
-                var commandDefn = self.findDefinition(nextCommand);
-                if( commandDefn.immediate ) {
-                  commandDefn.fn();
-                } else {
-                  self.newCommand.addFunction( commandDefn );
-                }
+      while( nextCommand = self.commands.shift() ) {
+        if( nextCommand ) {
+          var flN = parseFloat(nextCommand);
+          if( isNaN(flN) ) {
+            if( self.compilationMode ) {
+              var commandDefn = self.findDefinition(nextCommand);
+              if( commandDefn.immediate ) {
+                commandDefn.fn();
               } else {
-                self.execute(nextCommand);
+                self.newCommand.addFunction( commandDefn );
               }
             } else {
-              var intN = parseInt(nextCommand, 10);
-              if( flN === intN ) { // TODO not sure this is necessary
-                self.pushToDataStack(intN);
-              } else {
-                self.pushToDataStack(flN);
-              }
+              self.execute(nextCommand);
+            }
+          } else {
+            var intN = parseInt(nextCommand, 10);
+            if( flN === intN ) { // TODO not sure this is necessary
+              self.pushToDataStack(intN);
+            } else {
+              self.pushToDataStack(flN);
             }
           }
         }
-      } catch( err ) {
-        console.error("Not able to process");
       }
     };
 
@@ -321,8 +350,18 @@
       self.response += txt + ' ';
     };
 
+    // override the default logger
     this.setLogFunction = function( fn ) {
       this.logFn = fn;
+    };
+
+    this.errorFn = function( txt ) {
+      throw( 'FORTH ERROR: ' + txt );
+    };
+
+    // override the default error handler
+    this.setErrorFunction = function( fn ) {
+      this.errorFn = fn;
     };
   };
 

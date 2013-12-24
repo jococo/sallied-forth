@@ -6,9 +6,43 @@ describe("The Interpreter", function() {
     itp = new forthasm.Interpreter();
   });
 
+  // Utility Functions
+
   it("is at version 0.0.1", function() {
     expect(itp.versionString).toBe('0.0.1');
   });
+
+  describe("Value Store", function() {
+
+    it("returns undefined for values that haven't been set.", function() {
+      var name = "boff";
+      result = itp.getValue( name );
+      expect(result).not.toBeDefined();
+    });
+
+    it("can set and get integer values.", function() {
+      var name = "boff1";
+      itp.setValue( name, -99 );
+      result = itp.getValue( name );
+      expect(result).toBe( -99 );
+    });
+
+    it("can set and get string values.", function() {
+      var name = "boff2";
+      itp.setValue( name, "Hallelujah!" );
+      result = itp.getValue( name );
+      expect(result).toBe( "Hallelujah!" );
+    });
+
+    it("can set and get complex values.", function() {
+      var name = "boff3";
+      itp.setValue( name, {a: "help", c: 3.1} );
+      result = itp.getValue( name );
+      expect(result).toEqual( {a: "help", c: 3.1} );
+    });
+
+  });
+
 
   // stack
   describe("stack", function() {
@@ -301,6 +335,86 @@ describe("The Interpreter", function() {
       it("fails silently if no defn object is available.", function() {
         result = itp.interpret('1 2 3 >cfa .s');
         expect(result).toBe('[1,2,3]');
+      });
+
+    });
+
+    describe("' function", function() {
+
+      it("finds a word and returns it's function", function() {
+        result = itp.interpret("' swap .");
+        expect(result).toBeDefined();
+        expect(result).not.toBe(null);
+      });
+
+    })
+
+    describe( "! function", function() {
+
+      it("stores an integer value by name (name, value)", function() {
+        result = itp.interpret("word speed 87 ! .l");
+        expect( result ).toBe('0'); // stack length 0
+        expect( itp.valueStore['speed'] ).toEqual(87); // only reach into valueStore for tests.
+      });
+
+    });
+
+    describe( "@ function", function() {
+
+      it("retieves an integer value by name", function() {
+        itp.interpret("word pressure 10102 ! .l");
+        result = itp.interpret("word pressure @ .l .");
+        expect( result ).toBe('1 10102');
+      });
+
+      it("throws an error if stack is empty", function() {
+        result = function() {
+          itp.interpret("@");
+        };
+        expect(result).toThrow();
+      });
+
+    });
+
+    describe("CREATE", function() {
+
+      it("it creates a new CustomCommand", function() {
+        result = itp.interpret('word spoon create .l');
+        expect(result).toEqual('0');
+        expect(itp.newCommand).toBeDefined();
+      });
+
+      it("throws an error if no name is supplied.", function() {
+        result = function() {
+          itp.interpret('create');
+        };
+        expect(result).toThrow();
+      });
+
+      it("throws an error if create already called.", function() {
+        itp.interpret('word andy create');
+        result = function() {
+          itp.interpret('word gill create');
+        };
+        expect(result).toThrow();
+      });
+
+    });
+
+    describe("[ and ] functions", function() {
+
+      it("[ sets compilationMode to true", function() {
+        expect(itp.compilationMode).toBeFalsy();
+        itp.interpret('[');
+        expect(itp.compilationMode).toBe(true);
+      });
+
+      it("] sets compilationMode to false and needs to run as immediate", function() {
+        expect(itp.compilationMode).toBeFalsy();
+        itp.interpret('[');
+        expect(itp.compilationMode).toBe(true);
+        itp.interpret(']');
+        expect(itp.compilationMode).toBeFalsy();
       });
 
     });
