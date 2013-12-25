@@ -1,4 +1,4 @@
-# sallied-forth.js
+# salliedforth.js
 
 A non-legal version of Forth.
 
