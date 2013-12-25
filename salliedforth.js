@@ -377,4 +377,4 @@
     };
   };
 
-})(typeof exports === 'undefined'? this['forthasm']={}: exports);
+})(typeof exports === 'undefined'? this['salliedforth']={}: exports);

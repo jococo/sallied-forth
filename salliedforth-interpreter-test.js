@@ -3,7 +3,7 @@ describe("The Interpreter", function() {
   var itp, result;
 
   beforeEach(function() {
-    itp = new forthasm.Interpreter();
+    itp = new salliedforth.Interpreter();
   });
 
   // Utility Functions

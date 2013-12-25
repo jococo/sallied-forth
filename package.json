@@ -1,8 +1,8 @@
 {
-  "name": "ForthAsm",
+  "name": "salliedforth",
   "version": "0.0.1",
   "description": "Great big Forth for Asm.js",
-  "main": "forthasm.js",
+  "main": "salliedforth.js",
   "scripts": {
     "test": "test"
   },
