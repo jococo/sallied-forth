@@ -1,4 +1,4 @@
-# forthasm.js
+# sallied-forth.js
 
 A non-legal version of Forth written to eventually work directly with Asm.js.
 
