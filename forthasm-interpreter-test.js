@@ -316,9 +316,11 @@ describe("The Interpreter", function() {
         expect(result).toBe('1');
       });
 
-      it("returns 'undefined' when word can not be found.", function() {
-        result = itp.interpret('word jabberwocky find .');
-        expect(result).toBe('undefined');
+      it("throws an error when word can not be found.", function() {
+        result = function() {
+          itp.interpret('word jabberwocky find .');
+        };
+        expect(result).toThrow();
       });
 
     });
@@ -403,13 +405,13 @@ describe("The Interpreter", function() {
 
     describe("[ and ] functions", function() {
 
-      it("[ sets compilationMode to true", function() {
+      it("[ sets compilationMode to true.", function() {
         expect(itp.compilationMode).toBeFalsy();
         itp.interpret('[');
         expect(itp.compilationMode).toBe(true);
       });
 
-      it("] sets compilationMode to false and needs to run as immediate", function() {
+      it("] sets compilationMode to false and needs to run as immediate.", function() {
         expect(itp.compilationMode).toBeFalsy();
         itp.interpret('[');
         expect(itp.compilationMode).toBe(true);
@@ -419,6 +421,73 @@ describe("The Interpreter", function() {
 
     });
 
+    describe("; (SEMICOLON) function", function() {
+
+      it("exits compilation mode.", function() {
+        itp.interpret('[');
+        expect(itp.compilationMode).toBeTruthy();
+        itp.interpret(';');
+        expect(itp.compilationMode).toBeFalsy();
+      });
+
+      it("updates dictionaryHead.", function() {
+        var oldDictionaryHead = itp.dictionaryHead;
+        itp.interpret("word aaa create");
+        expect(oldDictionaryHead).toEqual(itp.dictionaryHead);
+        itp.interpret(";");
+        expect(oldDictionaryHead).not.toEqual(itp.dictionaryHead);
+      });
+
+      it("creates a findable item in the dictionary.", function() {
+        itp.interpret('word newby create ;');
+        result = itp.interpret('word newby find .l');
+        expect(result).toBe('1');
+      });
+
+      it("clears newCommand variable.", function() {
+        result = itp.interpret('word hippo create ;');
+        expect(itp.newCommand).not.toBeDefined();
+      });
+
+    });
+
   });
+
+  describe("Defining new words", function() {
+
+    it("unfound word throws an error", function() {
+      result = function() {
+        itp.interpret("faker");
+      };
+      expect(result).toThrow();
+    });
+
+    describe(": function", function() {
+
+      it("creates a new word.", function() {
+        itp.interpret(': monolith ;');
+        expect(itp.compilationMode).toBeFalsy();
+      });
+
+      it("creates a findable word.", function() {
+        itp.interpret(': cuckoo ;');
+        var result2;
+        result = function() {
+          result2 = itp.interpret("word cuckoo find .l");
+        };
+        expect(result).not.toThrow();
+        expect(result2).toBe('1');
+        // not sure how to test validity of find result, maybe I don't need to yet.
+      });
+
+      it("can create a word which can call other functions.", function() {
+        itp.interpret(': dup+ dup + ;');
+        result = itp.interpret('19 dup+ .l .s');
+        expect(result).toBe(null);
+      });
+
+    })
+
+  })
 
 });

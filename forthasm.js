@@ -231,8 +231,13 @@
 
     // find the definition
     this.addToDictionary('find', function() {
-      var defn = self.findDefinition( self.popFromDataStack() );
-      self.pushToDataStack( defn );
+      var name = self.popFromDataStack();
+      var defn = self.findDefinition( name );
+      if( defn ) {
+        self.pushToDataStack( defn );
+        return;
+      }
+      self.error("Cannot find word '" + name + "'");
     });
 
     // convert the definition object to it's function
@@ -310,23 +315,30 @@
     }, true);
 
     this.processCommands = function() {
-      var nextCommand;
-      while( nextCommand = self.commands.shift() ) {
-        if( nextCommand ) {
-          var flN = parseFloat(nextCommand);
+      var nextCommandName;
+      while( nextCommandName = self.commands.shift() ) {
+
+        if( nextCommandName ) {
+
+          // check if it's a number
+          var flN = parseFloat(nextCommandName);
           if( isNaN(flN) ) {
+
             if( self.compilationMode ) {
-              var commandDefn = self.findDefinition(nextCommand);
+              // in compilationMode
+              var commandDefn = self.findDefinition(nextCommandName);
               if( commandDefn.immediate ) {
+                // if it's an immediate command run it now
                 commandDefn.fn();
               } else {
+                // add it to this commands list of commands
                 self.newCommand.addFunction( commandDefn );
               }
             } else {
-              self.execute(nextCommand);
+              self.execute(nextCommandName);
             }
           } else {
-            var intN = parseInt(nextCommand, 10);
+            var intN = parseInt(nextCommandName, 10);
             if( flN === intN ) { // TODO not sure this is necessary
               self.pushToDataStack(intN);
             } else {
