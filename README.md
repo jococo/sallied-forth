@@ -28,15 +28,20 @@ Tests are included and run from the main index.html page at present. This projec
 
 ## TODO
 
-* comments
+* look into vocabularies / namespaces?
 * loops or recursion or both
   ** is recursion possible?
 * decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
 * should stack under & overflows fail silently and not modify the stack or should they throw an exception?
   Maybe this could be a setting, a user choice?
   Alternatively, set a(n) error function(s).
+* collections
+  js arrays, objects (Is this a good time to look at mori?)
+* javascript interop
 
 ## DONE
+
+* comments [26/12/2013]
 * anonymous functions? [26/12/2013]
   how to define
   no need to add them to the dictionary
