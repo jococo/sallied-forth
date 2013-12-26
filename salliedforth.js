@@ -131,7 +131,7 @@
         });
         self.executeFunctions.apply( self, allFunctions );
       } catch(err) {
-        throw(err);
+        self.error(err);
       }
     };
 
