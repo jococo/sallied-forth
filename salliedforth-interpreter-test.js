@@ -592,11 +592,6 @@ describe("The Interpreter", function() {
         expect(result).toBe('1 46');
       });
 
-      it("redefining a word displays a warning.", function() {
-        itp.interpret(': thingy 222 ;');
-        expectResult(': thingy 111 ;', 'thingy is not unique.');
-      });
-
     });
 
     describe("LIT", function() {
@@ -615,6 +610,20 @@ describe("The Interpreter", function() {
 
     });
 
+  });
+
+  describe("Redefining words", function() {
+
+    it("redefining a word displays a warning.", function() {
+      itp.interpret(': thingy 222 ;');
+      expectResult(': thingy 111 ;', 'thingy is not unique.');
+    });
+
+    it("calling the redefined word in the definition should succeed.", function() {
+      itp.interpret(': anum 333 ;');
+      itp.interpret(': anum anum 222 ;');
+      expectResult('anum .l .s', '2 [333,222]');
+    });
   });
 
   describe("Anonymous Functions", function() {
