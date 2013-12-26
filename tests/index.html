@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SalliedForth</title>
+    <link rel="stylesheet" href="js/lib/jasmine/jasmine.css">
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <h1>SalliedForth</h1>
+    <textarea id="logBox" cols="80" rows="10" readonly>OK.</textarea>
+    <br />
+    <textarea id="inputBox" cols="80" rows="2" ></textarea>
+    <div>
+      <a href="/build/index.html">Just the REPL</a>
+    </div>
+
+    <script src="js/salliedforth.js"></script>
+    <script>
+      var self = this;
+      var interpreter = new salliedforth.Interpreter();
+      var inputter = document.getElementById('inputBox');
+      var logText = document.getElementById('logBox');
+
+      var log = function( txt ) {
+        var oldText = logText.value;
+        logText.value = oldText + '\n' + txt;
+        logText.scrollTop = logText.scrollHeight;
+      }
+
+      var systemLog = function( txt ) {
+        console.log( "FORTH: ", txt );
+      }
+
+      interpreter.setLogFunction( log );
+      // interpreter.setErrorFunction( log );
+
+      inputter.onkeypress = function(e){
+        if (!e) e = window.event;
+        var keyCode = e.keyCode || e.which;
+        if (keyCode == '13'){
+          // Enter pressed
+          interpreter.interpret( this.value );
+          this.value = '';
+          return false;
+        }
+      }
+    </script>
+    <script src="js/lib/jasmine/jasmine.js"></script>
+    <script src="js/lib/jasmine/jasmine-html.js"></script>
+    <script src="js/lib/jasmine/boot.js"></script>
+    <script src="js/salliedforth-interpreter-test.js"></script>
+  </body>
+</html>

@@ -2,8 +2,7 @@
 <html>
   <head>
     <title>SalliedForth</title>
-    <link rel="stylesheet" href="lib/jasmine/jasmine.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
     <h1>SalliedForth</h1>
@@ -11,10 +10,10 @@
     <br />
     <textarea id="inputBox" cols="80" rows="2" ></textarea>
     <div>
-      <a href="/repl.html">Just the REPL</a>
+      <a href="/tests/index.html">Main REPL with tests.</a>
     </div>
 
-    <script src="salliedforth.js"></script>
+    <script src="js/salliedforth.js"></script>
     <script>
       var self = this;
       var interpreter = new salliedforth.Interpreter();
@@ -24,15 +23,13 @@
       var log = function( txt ) {
         var oldText = logText.value;
         logText.value = oldText + '\n' + txt;
-        logText.scrollTop = logText.scrollHeight;
       }
 
       var systemLog = function( txt ) {
         console.log( "FORTH: ", txt );
       }
 
-      interpreter.setLogFunction( log );
-      // interpreter.setErrorFunction( log );
+      interpreter.setLogFunction( systemLog );
 
       inputter.onkeypress = function(e){
         if (!e) e = window.event;
@@ -45,9 +42,5 @@
         }
       }
     </script>
-    <script src="lib/jasmine/jasmine.js"></script>
-    <script src="lib/jasmine/jasmine-html.js"></script>
-    <script src="lib/jasmine/boot.js"></script>
-    <script src="salliedforth-interpreter-test.js"></script>
   </body>
 </html>
