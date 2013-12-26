@@ -21,6 +21,12 @@ module.exports = function(grunt) {
             dest: 'build/'
             // ,
             // filter: 'isFile'
+          },
+          {
+            expand: true,
+            flatten: true,
+            src: ['src/css/*.css'],
+            dest: 'build/css/'
           }
         ]
       },
@@ -41,5 +47,5 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
 
   grunt.registerTask('default', ['uglify']);
-  grunt.registerTask('build', ['uglify', 'copy:build']);
+  grunt.registerTask('build', ['uglify', 'copy:build', 'copy:test']);
 };
