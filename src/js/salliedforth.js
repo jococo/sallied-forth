@@ -1,5 +1,5 @@
 (function(exports){
-  "use asm";
+  "use strict";
 
   var CustomCommand = function( name, prev, scope, errorFn ) {
     var self = this;
