@@ -230,8 +230,7 @@ describe("The Interpreter", function() {
         result = itp.interpret("+ .l .");
         expect(result).toBe("1 0");
       });
-
-    })
+    });
 
     describe("* (MULT) function", function() {
 
@@ -308,6 +307,14 @@ describe("The Interpreter", function() {
       });
 
     });
+
+    describe('INC function', function() {
+
+      it("increments the top value on the stack", function() {
+        expectResult('4 inc .l .', '1 5');
+      });
+
+    })
 
   });
 
@@ -522,6 +529,11 @@ describe("The Interpreter", function() {
         itp.interpret(': dup+ dup + ;');
         result = itp.interpret('23 dup+ .l .');
         expect(result).toBe('1 46');
+      });
+
+      it("redefining a word displays a warning.", function() {
+        itp.interpret(': thingy 222 ;');
+        expectResult(': thingy 111 ;', 'thingy is not unique.');
       });
 
     });

@@ -14,6 +14,8 @@ As mentioned, this was intended to utilize Asm.js for mega speed, but I am consi
 
 ## Design decisions
 
+* lowercase words NO SHOUTING!!
+
 ### Using dynamic features of the implementation language
 
 * No memory addresses
@@ -41,6 +43,7 @@ Tests are included and run from the main index.html page at present. This projec
 
 ## DONE
 
+* word definitions in forth at startup! [26/12/2013]
 * comments [26/12/2013]
 * anonymous functions? [26/12/2013]
   how to define

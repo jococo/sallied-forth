@@ -135,6 +135,76 @@
       }
     };
 
+        this.processCommands = function() {
+      var nextCommandName;
+      while( nextCommandName = self.commands.shift() ) {
+
+        if( nextCommandName ) {
+
+          // check if it's a number
+          var flN = parseFloat(nextCommandName);
+          if( isNaN(flN) ) {
+
+            if( self.compilationMode ) {
+              // in compilationMode
+              var commandDefn = self.findDefinition(nextCommandName);
+              if( commandDefn.immediate ) {
+                // if it's an immediate command run it now
+                commandDefn.fn();
+              } else {
+                // add it to this commands list of commands
+                self.newCommand.addFunction( commandDefn.fn );
+              }
+            } else {
+              self.executeWords(nextCommandName);
+            }
+          } else {
+            if( self.compilationMode ) {
+              self.newCommand.addFunction(
+                                          (function(num) {
+                return function() {
+                  self.pushToDataStack(num);
+                };
+              } )(flN));
+            } else {
+              self.pushToDataStack(flN);
+            }
+          }
+        }
+      }
+    };
+
+    this.interpret = function(txt) {
+      self.response = "";
+      self.commands = txt.split(' ');
+      // response = self.commands;
+      self.processCommands();
+      // self.log( self.response );
+      return self.response.trim();
+    };
+
+    this.logFn = function(txt) {
+      self.response += txt + ' ';
+    };
+
+    // override the default logger
+    this.setLogFunction = function( fn ) {
+      this.logFn = fn;
+    };
+
+    this.errorFn = function( txt ) {
+      throw( 'FORTH ERROR: ' + txt );
+    };
+
+    // override the default error handler
+    this.setErrorFunction = function( fn ) {
+      this.errorFn = fn;
+    };
+
+    // ---------------------------------
+    // Definitions
+    // ---------------------------------
+
     this.addToDictionary('.', function() {
       self.log( self.popFromDataStack() );
     });
@@ -384,6 +454,12 @@
       self.executeWords(']');
       var cmd = self.popFromDataStack();
       if( cmd ) {
+        if( cmd && cmd.name ) {
+          var found = self.findDefinition( cmd.name );
+          if( found ) {
+            self.log( cmd.name + ' is not unique.' );
+          }
+        }
         self.dictionaryHead = cmd;
       }
     }, true);
@@ -391,6 +467,9 @@
     this.addToDictionary(':', function() {
       self.executeWords('word', 'create', '[');
     });
+
+
+    this.interpret( ': inc 1 + ;' );
 
     this.addToDictionary('.list', function() {
       var node = self.dictionaryHead;
@@ -417,68 +496,6 @@
     this.addToDictionary('.vs', function() {
       self.log( self.valueStore );
     });
-
-    this.processCommands = function() {
-      var nextCommandName;
-      while( nextCommandName = self.commands.shift() ) {
-
-        if( nextCommandName ) {
-
-          // check if it's a number
-          var flN = parseFloat(nextCommandName);
-          if( isNaN(flN) ) {
-
-            if( self.compilationMode ) {
-              // in compilationMode
-              var commandDefn = self.findDefinition(nextCommandName);
-              if( commandDefn.immediate ) {
-                // if it's an immediate command run it now
-                commandDefn.fn();
-              } else {
-                // add it to this commands list of commands
-                self.newCommand.addFunction( commandDefn.fn );
-              }
-            } else {
-              self.executeWords(nextCommandName);
-            }
-          } else {
-            var intN = parseInt(nextCommandName, 10);
-            if( flN === intN ) { // TODO not sure this is necessary
-              self.pushToDataStack(intN);
-            } else {
-              self.pushToDataStack(flN);
-            }
-          }
-        }
-      }
-    };
-
-    this.interpret = function(txt) {
-      self.response = "";
-      self.commands = txt.split(' ');
-      // response = self.commands;
-      self.processCommands();
-      // self.log( self.response );
-      return self.response.trim();
-    };
-
-    this.logFn = function(txt) {
-      self.response += txt + ' ';
-    };
-
-    // override the default logger
-    this.setLogFunction = function( fn ) {
-      this.logFn = fn;
-    };
-
-    this.errorFn = function( txt ) {
-      throw( 'FORTH ERROR: ' + txt );
-    };
-
-    // override the default error handler
-    this.setErrorFunction = function( fn ) {
-      this.errorFn = fn;
-    };
   };
 
 })(typeof exports === 'undefined'? this['salliedforth']={}: exports);
