@@ -263,6 +263,22 @@
       }
     });
 
+    this.addToDictionary('roll', function() {
+      if(self.dataStack.length < 2) {
+        self.error("ROLL needs something to work with, nothing on stack!");
+      } else {
+        var places = self.popFromDataStack();
+        if(self.dataStack.length < places + 1) {
+          self.error("ROLL specifed a larger number then number of items on stack!");
+        } else {
+          var item = self.dataStack.splice(self.dataStack.length - places - 1, 1);
+          self.pushToDataStack( item[0] );
+        }
+      }
+    });
+
+    // Maths words
+
     this.addToDictionary('+', function() { // ADD
       var val1 = self.popFromDataStack() || 0;
       var val2 = self.popFromDataStack() || 0;
@@ -309,6 +325,16 @@
         var result = Math.floor( val2 / val1 );
         self.pushToDataStack( val2 - (val1 * result) ); // remainder
         self.pushToDataStack( result );
+      }
+    });
+
+    this.addToDictionary('=', function() {
+      var val1 = self.popFromDataStack();
+      if( self.dataStack.length < 1) {
+        self.error("2 items needed for EQUAL!");
+      } else {
+        var val2 = self.popFromDataStack();
+        self.pushToDataStack( val1 === val2 );
       }
     });
 
@@ -468,8 +494,14 @@
       self.executeWords('word', 'create', '[');
     });
 
+    // ROT
+    this.interpret(': rot 2 roll ;');
 
+    // increment the top number on the stack
     this.interpret( ': inc 1 + ;' );
+
+    // decrement the top number on the stack
+    this.interpret( ': dec 1 - ;' );
 
     this.addToDictionary('.list', function() {
       var node = self.dictionaryHead;

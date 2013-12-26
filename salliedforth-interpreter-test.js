@@ -11,6 +11,13 @@ describe("The Interpreter", function() {
     expect(result).toBe(out);
   }
 
+  function expectThrow( inStr ) {
+    result = function() {
+      itp.interpret(inStr);
+    }
+    expect(result).toThrow();
+  }
+
   // Utility Functions
 
   it("is at version 0.0.1", function() {
@@ -152,65 +159,100 @@ describe("The Interpreter", function() {
 
   });
 
-  // DUP function
-  describe("DUP function", function() {
+  describe("Stack Manipulation", function() {
 
-    it("duplicates the top stack item.", function() {
-      result = itp.interpret("3 dup .l .");
-      expect(result).toBe("2 3"); // size of stack, top item
+    // DUP function
+    describe("DUP function", function() {
+
+      it("duplicates the top stack item.", function() {
+        result = itp.interpret("3 dup .l .");
+        expect(result).toBe("2 3"); // size of stack, top item
+      });
+
+      it("fails silently if stack is empty", function() {
+        result = itp.interpret("dup .l .");
+        expect(result).toBe("0 undefined"); // size of stack, top item
+      });
+
     });
 
-    it("fails silently if stack is empty", function() {
-      result = itp.interpret("dup .l .");
-      expect(result).toBe("0 undefined"); // size of stack, top item
+    // DROP function
+    describe("DROP function", function() {
+
+      it("drops the top stack item.", function() {
+        result = itp.interpret("7 8 drop .l .");
+        expect(result).toBe("1 7"); // size of stack, top item
+      });
+
+      it("fails silently if stack is empty", function() {
+        result = itp.interpret("drop .l .");
+        expect(result).toBe("0 undefined"); // size of stack, top item
+      });
+
     });
 
-  });
+    // SWAP function
+    describe("SWAP function", function() {
 
-  // DROP function
-  describe("DROP function", function() {
+      it("swaps the top stack item with the one beneath.", function() {
+        result = itp.interpret("4 9 swap .l .");
+        expect(result).toBe("2 4"); // size of stack, top item
+      });
 
-    it("drops the top stack item.", function() {
-      result = itp.interpret("7 8 drop .l .");
-      expect(result).toBe("1 7"); // size of stack, top item
+      it("fails silently if stack is empty", function() {
+        result = itp.interpret("swap .l .");
+        expect(result).toBe("0 undefined"); // size of stack, top item
+      });
+
     });
 
-    it("fails silently if stack is empty", function() {
-      result = itp.interpret("drop .l .");
-      expect(result).toBe("0 undefined"); // size of stack, top item
+    // OVER function
+    describe("OVER function", function() {
+
+      it("duplicates the second stack item pushing it on the top.", function() {
+        result = itp.interpret("6 7 over .l .");
+        expect(result).toBe("3 6"); // size of stack, top item
+      });
+
+      it("fails silently if stack is empty", function() {
+        result = itp.interpret("over .l .");
+        expect(result).toBe("0 undefined"); // size of stack, top item
+      });
+
     });
 
-  });
+    // ROLL function
+    describe("ROLL function", function() {
 
-  // SWAP function
-  describe("SWAP function", function() {
+      it("take the third item on the stack and put's it up top", function() {
+        expectResult('1 2 3 2 roll .s', '[2,3,1]');
+      });
 
-    it("swaps the top stack item with the one beneath.", function() {
-      result = itp.interpret("4 9 swap .l .");
-      expect(result).toBe("2 4"); // size of stack, top item
-    });
+      it("take the second item on the stack and put's it up top", function() {
+        expectResult('1 2 3 1 roll .s', '[1,3,2]');
+      });
 
-    it("fails silently if stack is empty", function() {
-      result = itp.interpret("swap .l .");
-      expect(result).toBe("0 undefined"); // size of stack, top item
-    });
+      it("stays the same", function() {
+        expectResult('1 2 3 0 roll .s', '[1,2,3]');
+      });
 
-  });
+    })
 
-  // OVER function
-  describe("OVER function", function() {
+    // ROT function
+    describe("ROT function", function() {
 
-    it("duplicates the second stack item pushing it on the top.", function() {
-      result = itp.interpret("6 7 over .l .");
-      expect(result).toBe("3 6"); // size of stack, top item
-    });
+      it("take the third item on the stack and put's it up top", function() {
+        expectResult('1 2 3 rot .s', '[2,3,1]');
+      });
 
-    it("fails silently if stack is empty", function() {
-      result = itp.interpret("over .l .");
-      expect(result).toBe("0 undefined"); // size of stack, top item
-    });
+      it("throws an error if <3 items on the stack", function() {
+        expectThrow('1 2 rot');
+      });
 
-  });
+    })
+
+  })
+
 
   describe("Maths functions", function() {
 
@@ -308,13 +350,35 @@ describe("The Interpreter", function() {
 
     });
 
+    describe("= (EQUALS) function", function() {
+      it("equals uses JavaScript ===", function() {
+        // yes
+        expectResult('1 1 = .l .', '1 true');
+        expectResult('1.0 1 = .l .', '1 true');
+        expectResult('0 1.0 + 1 = .l .', '1 true');
+        expectResult('word bob word bob = .l .', '1 true');
+        // no
+        expectResult('19 100 = .l .', '1 false');
+        expectResult('word bob word Bob = .l .', '1 false');
+        expectResult('word true true = .l .', '1 false');
+      });
+    });
+
     describe('INC function', function() {
 
       it("increments the top value on the stack", function() {
         expectResult('4 inc .l .', '1 5');
       });
 
-    })
+    });
+
+    describe('DEC function', function() {
+
+      it("decrements the top value on the stack", function() {
+        expectResult('4 dec .l .', '1 3');
+      });
+
+    });
 
   });
 
@@ -362,10 +426,7 @@ describe("The Interpreter", function() {
       });
 
       it("throws an error when word can not be found.", function() {
-        result = function() {
-          itp.interpret('word jabberwocky find .');
-        };
-        expect(result).toThrow();
+        expectThrow('word jabberwocky find .');
       });
 
     });
