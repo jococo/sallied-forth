@@ -39,15 +39,15 @@ Most features have been developed with accompanying tests and they will be enhan
 * loops or recursion or both
   ** is recursion possible?
 * decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
-* should stack under & overflows fail silently and not modify the stack or should they throw an exception?
-  Maybe this could be a setting, a user choice?
-  Alternatively, set a(n) error function(s).
 * collections
   js arrays, objects (Is this a good time to look at mori?)
 * javascript interop
+* run test auto with Grunt
 
 ## DONE
 
+* Errors are thrown by default now, can be overriden by setting your own error function. [26/12/2013]
+* Grunt build and test tags [26/12/2013]
 * word definitions in forth at startup! [26/12/2013]
 * comments [26/12/2013]
 * anonymous functions? [26/12/2013]

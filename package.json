@@ -1,7 +1,7 @@
 {
   "name": "salliedforth",
-  "version": "0.0.1",
-  "description": "Great big Forth for Asm.js",
+  "version": "0.0.2",
+  "description": "Great big Forth for JavaScript",
   "author": "Joc",
   "license": "MIT",
   "main": "salliedforth.js",
@@ -10,7 +10,7 @@
   },
   "keywords": [
     "forth",
-    "asmjs",
+    "repl",
     "js"
   ],
   "devDependencies": {
