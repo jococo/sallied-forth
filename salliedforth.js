@@ -1,18 +1,22 @@
 (function(exports){
   "use asm";
 
-  var CustomCommand = function( name, prev, execFn ) {
+  var CustomCommand = function( name, prev, scope, errorFn ) {
     var self = this;
     this.name = name;
     this.fn = function() {
-      execFn(self.functions.map( function(defn) {
-          return defn.fn;
-        }));
+      self.functions.forEach( function(fn1) {
+        fn1.call(scope);
+      });
+    };
+    this.errorFn = errorFn || function(txt) {
+      console.error("FORTH ERROR::CustomCommand: " + txt);
     };
     this.prev = prev;
     this.functions = [];
-    this.addFunction = function( fn ) {
-      self.functions.push( fn );
+    this.addFunction = function( fn2 ) {
+      if( typeof fn2 !== 'function') {self.errorFn("addFunction can only be called with a function ref as argument!");}
+      self.functions.push( fn2 );
     };
   };
 
@@ -98,24 +102,37 @@
       return undefined;
     };
 
-    this.executeFunctions = function() {
+    /**
+      * Run all the functions passed in.
+      */
+    this.executeFunctions = function(/* function refs... */) {
       var args = Array.prototype.slice.call(arguments);
       args.forEach( function(fn) {
         fn();
       });
     };
 
-    this.execute = function() {
+    /**
+      * When a list of functions names (words) are passed in,
+      * fetch their definitions from the dictionary.
+      * Run all the functions.
+      * Throw an exception if a word cannot be found.
+      */
+    this.executeWords = function( /* names of functions... */ ) {
       var args = Array.prototype.slice.call(arguments);
-      var allFunctions = args.map(function(name) {
-        var defn = self.findDefinition( name );
-        if( defn ) {
-          return defn.fn;
-        } else {
-          throw('Function ' + name + ' not found!');
-        }
-      });
-      self.executeFunctions.apply( undefined, allFunctions );
+      try {
+        var allFunctions = args.map(function(name) {
+          var defn = self.findDefinition( name );
+          if( defn ) {
+            return defn.fn;
+          } else {
+            throw('Function ' + name + ' not found!');
+          }
+        });
+        self.executeFunctions.apply( self, allFunctions );
+      } catch(err) {
+        throw(err);
+      }
     };
 
     this.addToDictionary('.', function() {
@@ -271,7 +288,7 @@
     });
 
     this.addToDictionary("'", function() {
-      self.execute('word', 'find', '>cfa'); // , 'next' TODO find out what 'next' does.
+      self.executeWords('word', 'find', '>cfa'); // , 'next' TODO find out what 'next' does.
     });
 
     this.addToDictionary('create', function() {
@@ -280,7 +297,7 @@
       }
       if( self.dataStack.length > 0) {
         // get the object ready
-        var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self.execute );
+        var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self );
         self.newCommand =  cmd;
         return;
       }
@@ -289,20 +306,48 @@
 
     this.addToDictionary('[', function() {
       self.compilationMode = true;
+      if( !self.newCommand ) {
+        self.newCommand = new CustomCommand( "Anonymous", undefined, self );
+      }
     });
 
     this.addToDictionary(']', function() {
       self.compilationMode = false;
+      if( self.newCommand ) {
+        self.pushToDataStack( self.newCommand );
+        self.newCommand = void 0;
+      }
     }, true);
 
+    // for the moment this will try to act smart and
+    // will test whether the top item on the stack
+    // is a function or a CustomCommand
+    // may spli this up into two words if it looks unwieldy
+    this.addToDictionary('exec', function() {
+      if( self.dataStack.length > 0 ) {
+        var cmd = self.popFromDataStack();
+        if( typeof cmd === 'function' ) {
+          cmd.call( self );
+        } else if (cmd.fn) { // most liekly a command definition
+          cmd.fn.call(self);
+        } else {
+          self.error('' + cmd + ' is not executable!');
+        }
+      } else {
+        self.error('exec needs a function or command ref on the stack!');
+      }
+    });
+
     this.addToDictionary(';', function() {
-      self.execute(']');
-      self.dictionaryHead = self.newCommand;
-      self.newCommand = void 0;
+      self.executeWords(']');
+      var cmd = self.popFromDataStack();
+      if( cmd ) {
+        self.dictionaryHead = cmd;
+      }
     }, true);
 
     this.addToDictionary(':', function() {
-      self.execute('word', 'create', '[');
+      self.executeWords('word', 'create', '[');
     });
 
     this.addToDictionary('.list', function() {
@@ -332,10 +377,10 @@
                 commandDefn.fn();
               } else {
                 // add it to this commands list of commands
-                self.newCommand.addFunction( commandDefn );
+                self.newCommand.addFunction( commandDefn.fn );
               }
             } else {
-              self.execute(nextCommandName);
+              self.executeWords(nextCommandName);
             }
           } else {
             var intN = parseInt(nextCommandName, 10);

@@ -6,6 +6,11 @@ describe("The Interpreter", function() {
     itp = new salliedforth.Interpreter();
   });
 
+  function expectResult( inStr, out ) {
+    result = itp.interpret(inStr);
+    expect(result).toBe(out);
+  }
+
   // Utility Functions
 
   it("is at version 0.0.1", function() {
@@ -434,7 +439,7 @@ describe("The Interpreter", function() {
         var oldDictionaryHead = itp.dictionaryHead;
         itp.interpret("word aaa create");
         expect(oldDictionaryHead).toEqual(itp.dictionaryHead);
-        itp.interpret(";");
+        itp.interpret("] ;");
         expect(oldDictionaryHead).not.toEqual(itp.dictionaryHead);
       });
 
@@ -482,12 +487,44 @@ describe("The Interpreter", function() {
 
       it("can create a word which can call other functions.", function() {
         itp.interpret(': dup+ dup + ;');
-        result = itp.interpret('19 dup+ .l .s');
-        expect(result).toBe(null);
+        result = itp.interpret('23 dup+ .l .');
+        expect(result).toBe('1 46');
       });
 
-    })
+    });
 
-  })
+    describe("LIT", function() {
+
+      it("puts the following command as a literal on the stack.", function() {
+        result = itp.interpret('lit 99 .l .');
+        expect(result).toBe('1 99');
+        result = itp.interpret('lit help_me_rhonda! .l .');
+        expect(result).toBe('1 help_me_rhonda!');
+      });
+
+      it("puts the following command as a literal on the stack in compilation more.", function() {
+        result = itp.interpret('[ lit 47 ] exec .l .');
+        expect(result).toBe('1 47');
+      });
+
+    });
+
+  });
+
+  describe("Anonymous Functions", function() {
+
+    describe("[", function() {
+
+      it("creates an anonymous function on the stack", function() {
+        expectResult('[ dup + ] 7 swap exec .l .', '1 14');
+      });
+
+    });
+
+    describe("exec", function() {
+
+    });
+
+  });
 
 });
