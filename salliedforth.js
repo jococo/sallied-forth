@@ -28,7 +28,7 @@
     this.dictionary = undefined;
     this.dictionaryHead = undefined;
 
-    this.valueStore = {};
+    this.valueStore = {'false': false, 'true': true};
 
     this.version = {
       major: 0,
@@ -139,6 +139,14 @@
       self.log( self.popFromDataStack() );
     });
 
+    this.addToDictionary('true', function() {
+      self.pushToDataStack( self.getValue('true') );
+    });
+
+    this.addToDictionary('false', function() {
+      self.pushToDataStack( self.getValue('false') );
+    });
+
     /**
       * TODO Maybe specify endstops [ & ] so they can be changed?
       */
@@ -152,6 +160,10 @@
 
     this.addToDictionary('.l', function() {
       self.log( self.dataStack.length );
+    });
+
+    this.addToDictionary('.cs', function() {
+      self.dataStack.length = 0;
     });
 
     this.addToDictionary('dup', function() {
@@ -286,6 +298,36 @@
         self.error("@ needs a name input");
       }
     });
+
+    this.addToDictionary('!)?', function() {
+      var str = self.commands.shift();
+      self.pushToDataStack( str.indexOf(')') < 0 );
+    });
+
+    this.addToDictionary('not', function() {
+      self.pushToDataStack(!self.popFromDataStack());
+    });
+
+    // (fn bool --)
+    this.addToDictionary('while', function() {
+      while(!!self.popFromDataStack()) {
+        self.executeWords('dup', 'exec');
+      }
+      self.executeWords('drop');
+    });
+
+    this.addToDictionary('(', function() {
+      // TODO revisit forth version
+      // : test_for_close_backet word lit ) contains?
+      // ' test_for_close_backet while
+      // var words = "' !)? true while";
+      // self.executeWords.apply(self, words.split(' '));
+      var cmd;
+      while((cmd = self.commands.shift()) && (cmd.indexOf(')')==-1)) {
+        // console.log('while loop ' + cmd);
+      }
+
+    }, true);
 
     this.addToDictionary("'", function() {
       self.executeWords('word', 'find', '>cfa'); // , 'next' TODO find out what 'next' does.

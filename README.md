@@ -28,6 +28,7 @@ Tests are included and run from the main index.html page at present. This projec
 
 ## TODO
 
+* comments
 * loops or recursion or both
   ** is recursion possible?
 * decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.

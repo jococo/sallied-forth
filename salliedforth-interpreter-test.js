@@ -48,6 +48,39 @@ describe("The Interpreter", function() {
 
   });
 
+  describe('WHILE', function() {
+
+    it("takes a function and a boolean", function() {
+      expectResult("' dup false while .l", "0");
+    });
+
+    it("continues until false is on top of stack", function() {
+      expectResult("[ false ] true while .l", '0');
+    });
+
+  });
+
+  describe("Comments", function() {
+
+    describe("( comment function", function() {
+
+      it("starts a comment", function() {
+        expectResult('2 3 + ( adding the two numbers together ) .l .', '1 5');
+      });
+    });
+  });
+
+  describe('NOT', function() {
+
+    it("pushes the boolean opposite of the top stack item", function() {
+      expectResult('true not .l .', '1 false');
+      expectResult('false not .l .', '1 true');
+      expectResult('5 not .l .', '1 false');
+      expectResult('0 not .l .', '1 true');
+      expectResult('word bob not .l .', '1 false');
+    });
+
+  })
 
   // stack
   describe("stack", function() {
