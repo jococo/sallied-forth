@@ -30,9 +30,12 @@ As mentioned, this was intended to utilize Asm.js for mega speed, but I am consi
 
 Tests are included and run from the main index.html page at present. This project uses the excellent Jasmine library.
 
+Most features have been developed with accompanying tests and they will be enhanced as the project evolves.
+
 ## TODO
 
 * look into vocabularies / namespaces?
+  ** also tidy order of word-sets
 * loops or recursion or both
   ** is recursion possible?
 * decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.

@@ -3,11 +3,13 @@
   <head>
     <title>SalliedForth</title>
     <link rel="stylesheet" href="lib/jasmine/jasmine.css">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <h1>SalliedForth</h1>
-    <input type="text" id="inputBox" /><br />
-    <textarea id="logBox" cols="30" rows="10"></textarea>
+    <textarea id="logBox" cols="80" rows="10" readonly>OK.</textarea>
+    <br />
+    <textarea id="inputBox" cols="80" rows="2" ></textarea>
     <div>
       <a href="/repl.html">Just the REPL</a>
     </div>
@@ -22,13 +24,15 @@
       var log = function( txt ) {
         var oldText = logText.value;
         logText.value = oldText + '\n' + txt;
+        logText.scrollTop = logText.scrollHeight;
       }
 
       var systemLog = function( txt ) {
         console.log( "FORTH: ", txt );
       }
 
-      interpreter.setLogFunction( systemLog );
+      interpreter.setLogFunction( log );
+      // interpreter.setErrorFunction( log );
 
       inputter.onkeypress = function(e){
         if (!e) e = window.event;
