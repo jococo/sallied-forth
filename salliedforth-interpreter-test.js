@@ -523,6 +523,10 @@ describe("The Interpreter", function() {
 
     describe("exec", function() {
 
+      it("can run a function on the stack", function() {
+        expectResult('12 19 word + find exec .l .', '1 31');
+      });
+
     });
 
   });

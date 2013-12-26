@@ -12,19 +12,33 @@ By non-legal I mean it doesn't strictly follow any Forth standard. The intention
 
 As mentioned, this was intended to utilize Asm.js for mega speed, but I am considering other paths..
 
+## Design decisions
+
+### Using dynamic features of the implementation language
+
+* No memory addresses
+  ** Function references are ok
+  ** No pointer maths
+* Anonymous functions
+* Values stored in a global object by name
+
 ## Testing
 
 Tests are included and run from the main index.html page at present. This project uses the excellent Jasmine library.
 
 ## TODO
 
+* loops or recursion or both
+  ** is recursion possible?
 * decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
-* should stack overflows fail silently and not modify the stack or should they throw an exception?
+* should stack under & overflows fail silently and not modify the stack or should they throw an exception?
   Maybe this could be a setting, a user choice?
   Alternatively, set a(n) error function(s).
-* anonymous functions?
+
+## DONE
+* anonymous functions? [26/12/2013]
   how to define
   no need to add them to the dictionary
-* Investigate whether to store named values in the Dictionary or separately in a JS Object masquerading as a HashMap?
-
-
+* Investigate whether to store named values in the Dictionary or
+separately in a JS Object masquerading as a HashMap?
+  **Object/HashMap for now** [26/12/2013]

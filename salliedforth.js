@@ -108,7 +108,7 @@
     this.executeFunctions = function(/* function refs... */) {
       var args = Array.prototype.slice.call(arguments);
       args.forEach( function(fn) {
-        fn();
+        fn.call(self);
       });
     };
 
@@ -358,6 +358,23 @@
         } while (node = node.prev);
       }
     }, true);
+
+    this.addToDictionary('.values', function() {
+      var keys = Object.getOwnPropertyNames( self.valueStore );
+      var values = keys.map(function(key) {
+        return self.valueStore[key];
+      });
+      self.log( values );
+    });
+
+    this.addToDictionary('.keys', function() {
+      var keys = Object.getOwnPropertyNames( self.valueStore );
+      self.log( keys );
+    });
+
+    this.addToDictionary('.vs', function() {
+      self.log( self.valueStore );
+    });
 
     this.processCommands = function() {
       var nextCommandName;
