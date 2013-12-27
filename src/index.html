@@ -6,9 +6,9 @@
   </head>
   <body>
     <h1>SalliedForth</h1>
-    <textarea id="logBox" cols="80" rows="10" readonly>OK.</textarea>
+    <textarea id="logBox" class="codebox" cols="80" rows="10" readonly>OK.</textarea>
     <br />
-    <textarea id="inputBox" cols="80" rows="2" ></textarea>
+    <textarea id="inputBox" class="codebox" cols="80" rows="2" ></textarea>
     <div>
       <a href="/tests/index.html">Main REPL with tests.</a>
     </div>
@@ -23,13 +23,14 @@
       var log = function( txt ) {
         var oldText = logText.value;
         logText.value = oldText + '\n' + txt;
+        logText.scrollTop = logText.scrollHeight;
       }
 
       var systemLog = function( txt ) {
         console.log( "FORTH: ", txt );
       }
 
-      interpreter.setLogFunction( systemLog );
+      interpreter.setLogFunction( log );
 
       inputter.onkeypress = function(e){
         if (!e) e = window.event;

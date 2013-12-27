@@ -652,7 +652,7 @@ describe("The Interpreter", function() {
       expect(result).toBe('1 [[1,2,3]]');
     });
     it("are a single item on the stack", function() {
-
+      expectResult('[ 5 6 7 8 9 10 11 ] .l', '1');
     });
   });
 

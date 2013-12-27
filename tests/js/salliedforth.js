@@ -534,7 +534,7 @@
     });
 
     // ROT
-    this.interpret(': rot 2 roll ;');
+    this.interpret(': rot ( a b c -- b c a ) 2 roll ;');
 
     // increment the top number on the stack
     this.interpret( ': inc 1 + ;' );
