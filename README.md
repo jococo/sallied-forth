@@ -17,6 +17,7 @@ As mentioned, this was intended to utilize Asm.js for mega speed, but I am consi
 ## Design decisions
 
 * lowercase words NO SHOUTING!!
+* The wrong brackets. Hmm, this one might be a bit frustrating if you are the sort of person who is used to the more standard Forth syntax (if you can pick one..), and I guess it must be annoying that everyone and their pet writes a non-standard Forth nowadays. But I am trying out using the brackets as a JavaScript dev might use them. {} braces for code, [] braces for Arrays. I think this will be less confusing with JavaScript interop. I am willing to discuss. Create a GitHub issue if it annoys, frustrates or disturbs you and we can talk.
 
 ### Using dynamic features of the implementation language
 
@@ -34,26 +35,27 @@ Most features have been developed with accompanying tests and they will be enhan
 
 ## TODO
 
-* look into vocabularies / namespaces?
-  ** also tidy order of word-sets
-* loops or recursion or both
-  ** is recursion possible?
-* decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
-* collections
+- [ ] look into vocabularies / namespaces?
+  *- [ ] also tidy order of word-sets
+- [ ] loops or recursion or both
+  *- [ ] is recursion possible?
+- [ ] decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
+- [ ] collections
   js arrays, objects (Is this a good time to look at mori?)
-* javascript interop
-* run test auto with Grunt
+- [ ] javascript interop
+- [ ] run test auto with Grunt
+- [ ] REPL input needs history
 
 ## DONE
 
-* Errors are thrown by default now, can be overriden by setting your own error function. [26/12/2013]
-* Grunt build and test tags [26/12/2013]
-* word definitions in forth at startup! [26/12/2013]
-* comments [26/12/2013]
-* anonymous functions? [26/12/2013]
+- [x] Errors are thrown by default now, can be overriden by setting your own error function. [26/12/2013]
+- [x] Grunt build and test tags [26/12/2013]
+- [x] word definitions in forth at startup! [26/12/2013]
+- [x] comments [26/12/2013]
+- [x] anonymous functions? [26/12/2013]
   how to define
   no need to add them to the dictionary
-* Investigate whether to store named values in the Dictionary or
+- [x] Investigate whether to store named values in the Dictionary or
 separately in a JS Object masquerading as a HashMap?
   **Object/HashMap for now** [26/12/2013]
 
