@@ -35,6 +35,11 @@ Most features have been developed with accompanying tests and they will be enhan
 
 ## TODO
 
+- BREAKING CHANGES!! start
+- [ ] interpreter will return a list of results in JS native datastructures where possible, will probably wrap with an error status. This is to improve JS interop.
+- [ ] result format will be: {data: [<array of values>...], status: TBD}, possibly a JS pseudo class, so that status codes can be standardised.
+- BREAKING CHANGES!! end
+
 - [ ] look into vocabularies / namespaces?
   *- [ ] also tidy order of word-sets
 - [ ] loops or recursion or both

@@ -1,6 +1,22 @@
 (function(exports){
   "use strict";
 
+  /**
+    merge properties from obj2 into obj1 if they don't exist.
+    returns obj1
+  */
+  function mergeIn( obj1, obj2 ) {
+      var attrname;
+      for (attrname in obj2) {
+        if( obj2.hasOwnProperty(attrname) ) {
+          if( !obj1.hasOwnProperty(attrname) && obj1[attrname] === undefined ) {
+            obj1[attrname] = obj2[attrname];
+          }
+        }
+      }
+      return obj1;
+  }
+
   var CustomCommand = function( name, prev, scope, errorFn ) {
     var self = this;
     this.name = name;
@@ -26,6 +42,7 @@
         } );
       }
     };
+    this.executeAfterCreation = false;
   };
 
   var ArrayCommand = function( scope ) {
@@ -37,9 +54,47 @@
     this.add = function( item ) {
       self._data.push( item );
     };
+    this.executeAfterCreation = true;
   };
 
-  exports.Interpreter = function() {
+  var ObjectCommand = function( scope ) {
+    var self = this;
+    this._data = {};
+    this.fn = function() { // TODO maybe we should pass in this function? TMI for Array.
+      if( self.key === undefined) {
+        scope.pushToDataStack( self._data );
+      } else {
+        scope.error("Unmatched key value pairs when defining Object. Key '" + self.key + "' does not have a value!");
+      }
+    };
+    this.key = void 0;
+    this.add = function( item ) {
+      if( self.key === undefined ) {
+        self.key = item;
+      } else {
+        self._data[ self.key ] = item;
+        self.key = void 0;
+      }
+    };
+    this.executeAfterCreation = true;
+  };
+
+  var ResponseData = function(status) {
+    var self = this;
+    this.data = [];
+    this.status = status;
+    this.stackLength = 0;
+  };
+
+  ResponseData.prototype.push = function(item) {
+    this.data.push(item);
+  };
+
+  ResponseData.prototype.pop = function() {
+    return this.data.pop();
+  };
+
+  exports.Interpreter = function( world ) {
     var self = this;
 
     this.dataStack = [];
@@ -47,7 +102,7 @@
     this.dictionary = undefined;
     this.dictionaryHead = undefined;
 
-    this.valueStore = {'false': false, 'true': true};
+    this.valueStore = mergeIn(world || {}, {'false': false, 'true': true});
 
     this.version = {
       major: 0,
@@ -64,8 +119,8 @@
     }
 
     // log function
-    this.log = function(txt) {
-      self.logFn && self.logFn( txt );
+    this.log = function(item) {
+      self.logFn && self.logFn( item );
       return void 0;
     };
 
@@ -83,6 +138,7 @@
     };
 
     this.popFromDataStack = function() {
+      if(self.dataStack.length < 1) { self.error("StackUnderFlow!"); }
       return self.dataStack.pop();
     };
 
@@ -156,7 +212,11 @@
       }
     };
 
-        this.processCommands = function() {
+    this.executeString = function( forthTxt ) {
+      self.executeWords.apply( self, forthTxt.split(' ') );
+    };
+
+    this.processCommands = function() {
       var nextCommandName;
       while( nextCommandName = self.commands.shift() ) {
 
@@ -169,12 +229,16 @@
             if( self.compilationMode ) {
               // in compilationMode
               var commandDefn = self.findDefinition(nextCommandName);
-              if( commandDefn.immediate ) {
-                // if it's an immediate command run it now
-                commandDefn.fn();
-              } else {
-                // add it to this commands list of commands
-                self.newCommand.add( commandDefn.fn );
+              if( commandDefn ) {
+                if( commandDefn.immediate ) {
+                  // if it's an immediate command run it now
+                  commandDefn.fn();
+                } else {
+                  // add it to this commands list of commands
+                  self.newCommand.add( commandDefn.fn );
+                }
+              } else { // if it's not a command try adding it to the new command anyway
+                self.newCommand.add( nextCommandName );
               }
             } else {
               self.executeWords(nextCommandName);
@@ -191,16 +255,17 @@
     };
 
     this.interpret = function(txt) {
-      self.response = "";
+      self.response = new ResponseData('OK.');
       self.commands = txt.split(' ');
       // response = self.commands;
       self.processCommands();
       // self.log( self.response );
-      return self.response.trim();
+      self.response.stackLength = self.dataStack.length;
+      return self.response;
     };
 
-    this.logFn = function(txt) {
-      self.response += txt + ' ';
+    this.logFn = function(item) {
+      self.response.push( item );
     };
 
     // override the default logger
@@ -240,9 +305,7 @@
       if( self.dataStack.length < 1 ) {
         self.log('[stack empty]');
       } else {
-        self.log( '[' + self.dataStack.map(function(item) {
-          return JSON.stringify(item);
-        }).join(",") + ']');
+        self.log( self.dataStack );
       }
     });
 
@@ -267,18 +330,15 @@
     });
 
     this.addToDictionary('swap', function() {
-      if( self.dataStack.length > 1 ) {
-        var val1 = self.popFromDataStack();
-        var val2 = self.popFromDataStack();
-        self.pushToDataStack( val1, val2 );
-      }
+      var val1 = self.popFromDataStack();
+      var val2 = self.popFromDataStack();
+      self.pushToDataStack( val1, val2 );
     });
 
     this.addToDictionary('over', function() {
-      if( self.dataStack.length > 1 ) {
-        var val = self.dataStack[ self.dataStack.length - 2 ];
-        self.pushToDataStack( val );
-      }
+      if( self.dataStack.length < 2 ) { self.error("Not enough items for OVER!"); }
+      var val = self.dataStack[ self.dataStack.length - 2 ];
+      self.pushToDataStack( val );
     });
 
     this.addToDictionary('roll', function() {
@@ -295,55 +355,47 @@
       }
     });
 
+    // JS Interop TODO does this need to go later, e.g. if we use the Maths functions?
+
+    this.addToDictionary('js@', function() {
+      self.executeString('word @');
+    });
+
+    this.addToDictionary('js!', function() {
+      self.executeString('word');
+      self.executeString('swap !');
+    });
+
     // Maths words
 
     this.addToDictionary('+', function() { // ADD
-      var val1 = self.popFromDataStack() || 0;
-      var val2 = self.popFromDataStack() || 0;
+      var val1 = self.popFromDataStack();
+      var val2 = self.popFromDataStack();
       self.pushToDataStack( val1 + val2 );
     });
 
     this.addToDictionary('-', function() { // MINUS
-      var val1 = self.popFromDataStack() || 0;
-      var val2 = self.popFromDataStack() || 0;
+      var val1 = self.popFromDataStack();
+      var val2 = self.popFromDataStack();
       self.pushToDataStack( val2 - val1 );
     });
 
     this.addToDictionary('*', function() { // MULT
-      var val1;
-      if( self.dataStack.length < 1 ) {
-        self.pushToDataStack( 1 );
-      } else if ( self.dataStack.length === 1 ) {
-        val1 = self.popFromDataStack() || 0;
-        self.pushToDataStack( val1 );
-      } else {
-        val1 = self.popFromDataStack() || 0;
-        var val2 = self.popFromDataStack() || 0;
-        self.pushToDataStack( val1 * val2 );
-      }
+      var val1 = self.popFromDataStack();
+      var val2 = self.popFromDataStack();
+      self.pushToDataStack( val1 * val2 );
     });
 
     this.addToDictionary('/', function() { // DIV
-      var val1 = self.popFromDataStack() || 0;
-      if( self.dataStack.length < 1) { // compensating for 1 item already popped.
-        self.pushToDataStack( 1 );
-      } else {
-        var val2 = self.popFromDataStack() || 0;
-        self.pushToDataStack( val2 / val1 );
-      }
+      var val1 = self.popFromDataStack();
+      var val2 = self.popFromDataStack();
+      self.pushToDataStack( val2 / val1 );
     });
 
     this.addToDictionary('%', function() { // MOD
-      var val1 = self.popFromDataStack() || 0;
-      if( self.dataStack.length < 1) { // compensating for 1 item already popped.
-        self.pushToDataStack( 0 ); // remainder
-        self.pushToDataStack( 1 );
-      } else {
-        var val2 = self.popFromDataStack() || 0;
-        var result = Math.floor( val2 / val1 );
-        self.pushToDataStack( val2 - (val1 * result) ); // remainder
-        self.pushToDataStack( result );
-      }
+      var val1 = self.popFromDataStack();
+      var val2 = self.popFromDataStack();
+      self.pushToDataStack( val2 % val1 );
     });
 
     this.addToDictionary('=', function() {
@@ -361,6 +413,8 @@
       var val = self.commands.shift();
       if( val ) {
         self.pushToDataStack( val );
+      } else {
+        self.error('No more words for WORD');
       }
     });
 
@@ -368,7 +422,12 @@
     this.addToDictionary('lit', function() {
       var val = self.commands.shift();
       if( val ) {
-        self.pushToDataStack( val );
+        var numVal = parseFloat( val );
+        if(isNaN(numVal)) {
+          self.pushToDataStack( val );
+        } else {
+          self.pushToDataStack( numVal );
+        }
       }
     }, true);
 
@@ -389,7 +448,8 @@
       if( defn.fn ) {
         self.pushToDataStack( defn.fn );
       } else { // probably not a defn, push it back
-        self.pushToDataStack( defn );
+        // self.pushToDataStack( defn );
+        self.error(">CFA requires a found defn.");
       }
     });
 
@@ -406,7 +466,12 @@
     this.addToDictionary('@', function() {
       if( self.dataStack.length > 0 ) {
         var name = self.popFromDataStack();
-        self.pushToDataStack( self.getValue(name) );
+        var value = self.getValue(name);
+        if( value !== undefined ) {
+          self.pushToDataStack( value );
+        } else {
+          self.error("value '" + name + "' is undefined!");
+        }
       }
        else {
         self.error("@ needs a name input");
@@ -462,7 +527,7 @@
       self.error("CREATE needs a name.");
     });
 
-    this.addToDictionary('{', function() {
+    this.addToDictionary('fn{', function() {
       self.compilationMode = true;
       if( !self.newCommand ) {
         self.newCommand = new CustomCommand( "Anonymous", undefined, self );
@@ -471,8 +536,11 @@
 
     this.addToDictionary('}', function() {
       self.compilationMode = false;
-      if( self.newCommand ) {
+      if( self.newCommand ) { // TODO temporary check, may need to provide a default flag in CustomCommand
         self.pushToDataStack( self.newCommand );
+        if( self.newCommand.executeAfterCreation ) {
+          self.executeWords('exec');
+        }
         self.newCommand = void 0;
       }
     }, true);
@@ -486,7 +554,7 @@
         var cmd = self.popFromDataStack();
         if( typeof cmd === 'function' ) {
           cmd.call( self );
-        } else if (cmd.fn) { // most likely a command definition
+        } else if (cmd.fn) { // most likely a command definition TODO see above about default flag for CustomCommand
           cmd.fn.call(self);
         } else {
           self.error('' + cmd + ' is not executable!');
@@ -511,7 +579,7 @@
     }, true);
 
     this.addToDictionary(':', function() {
-      self.executeWords('word', 'create', '{');
+      self.executeWords('word', 'create', 'fn{');
     });
 
     // Defining Arrays
@@ -531,6 +599,20 @@
 
     this.addToDictionary('array?', function() {
       self.pushToDataStack( Array.isArray( self.popFromDataStack() ) );
+    });
+
+    // Defining Objects
+
+    // only need the opening word as } is defined for functions fn{
+    // but still works for objects
+    this.addToDictionary('{', function() {
+      self.compilationMode = true;
+      self.newCommand = new ObjectCommand(self);
+    });
+
+    this.addToDictionary('object?', function() {
+      var obj = self.popFromDataStack();
+      self.pushToDataStack( obj === Object(obj) );
     });
 
     this.addToDictionary('concat', function() {

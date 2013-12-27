@@ -8,7 +8,12 @@ describe("The Interpreter", function() {
 
   function expectResult( inStr, out ) {
     result = itp.interpret(inStr);
-    expect(result).toBe(out);
+    var resultFirst = result.pop();
+    if( Array.isArray( out ) ) {
+      expect(resultFirst).toEqual(out);
+    } else {
+      expect(resultFirst).toBe(out);
+    }
   }
 
   function expectThrow( inStr ) {
@@ -58,11 +63,11 @@ describe("The Interpreter", function() {
   describe('WHILE', function() {
 
     it("takes a function and a boolean", function() {
-      expectResult("' dup false while .l", "0");
+      expectResult("' dup false while .l", 0);
     });
 
     it("continues until false is on top of stack", function() {
-      expectResult("{ false } true while .l", '0');
+      expectResult("fn{ false } true while .l", 0);
     });
 
   });
@@ -72,19 +77,19 @@ describe("The Interpreter", function() {
     describe("( comment function", function() {
 
       it("starts a comment", function() {
-        expectResult('2 3 + ( adding the two numbers together ) .l .', '1 5');
+        expectResult('2 3 + ( adding the two numbers together ) .', 5);
       });
     });
   });
 
-  describe('NOT', function() {
+  describe('NOT function', function() {
 
     it("pushes the boolean opposite of the top stack item", function() {
-      expectResult('true not .l .', '1 false');
-      expectResult('false not .l .', '1 true');
-      expectResult('5 not .l .', '1 false');
-      expectResult('0 not .l .', '1 true');
-      expectResult('word bob not .l .', '1 false');
+      expectResult('true not .', false);
+      expectResult('false not .', true);
+      expectResult('5 not .', false);
+      expectResult('0 not .', true);
+      expectResult('word bob not .', false);
     });
 
   })
@@ -94,35 +99,34 @@ describe("The Interpreter", function() {
 
     it("is empty at start.", function() {
       result = itp.interpret('.l');
-      expect(result).toBe('0');
+      expect(result.data[0]).toBe(0);
     });
 
     it("can have a number added.", function() {
       result = itp.interpret('99 .');
-      expect(result).toBe('99');
+      expect(result.data[0]).toBe(99);
     });
 
     it("can show it's length.", function() {
       result = itp.interpret('33 22 9 17 4 .l');
-      expect(result).toBe('5');
+      expect(result.data[0]).toBe(5);
     });
 
     it("can print out it's contents.", function() {
       result = itp.interpret('17 word frank .s');
-      expect(result).toBe('[17,"frank"]');
+      expect(result.data[0]).toEqual([17,"frank"]);
     });
 
     // . function, shows the top item on the stack
     describe("'.' function", function() {
 
       it("takes the top item.", function() {
-        result = itp.interpret('1 2 3 99 . .l');
-        expect(result).toBe('99 3');
+        result = itp.interpret('1 2 3 99 .');
+        expect(result.data.pop()).toBe(99);
       });
 
-      it("returns undefined for an empty stack and length stays at 0.", function() {
-        result = itp.interpret('. .l');
-        expect(result).toBe('undefined 0');
+      it("throws an error for an empty stack.", function() {
+        expectThrow('.');
       });
 
     });
@@ -130,14 +134,14 @@ describe("The Interpreter", function() {
     // .s function, shows the stack contents
     describe("'.s' function", function() {
 
-      it("takes the top item.", function() {
+      it("returns all the items.", function() {
         result = itp.interpret('1 2 3 99 .s');
-        expect(result).toBe('[1,2,3,99]');
+        expect(result.data[0]).toEqual([1,2,3,99]);
       });
 
       it("returns message for an empty stack and length stays at 0.", function() {
-        result = itp.interpret('.s .l');
-        expect(result).toBe('[stack empty] 0');
+        result = itp.interpret('.s');
+        expect(result.data.pop()).toBe('[stack empty]');
       });
 
     });
@@ -147,12 +151,12 @@ describe("The Interpreter", function() {
 
       it("shows length as 0 for empty stack", function() {
         result = itp.interpret('.l');
-        expect(result).toBe('0');
+        expect(result.pop()).toBe(0);
       });
 
       it("", function() {
         result = itp.interpret('1 2 3 4 5 6 7 8 9 .l');
-        expect(result).toBe('9');
+        expect(result.data.pop()).toBe(9);
       });
 
     });
@@ -165,13 +169,12 @@ describe("The Interpreter", function() {
     describe("DUP function", function() {
 
       it("duplicates the top stack item.", function() {
-        result = itp.interpret("3 dup .l .");
-        expect(result).toBe("2 3"); // size of stack, top item
+        result = itp.interpret("3 dup .");
+        expect(result.pop()).toBe(3); // size of stack, top item
       });
 
-      it("fails silently if stack is empty", function() {
-        result = itp.interpret("dup .l .");
-        expect(result).toBe("0 undefined"); // size of stack, top item
+      it("throws an error if stack is empty", function() {
+        expectThrow('dup');
       });
 
     });
@@ -181,12 +184,12 @@ describe("The Interpreter", function() {
 
       it("drops the top stack item.", function() {
         result = itp.interpret("7 8 drop .l .");
-        expect(result).toBe("1 7"); // size of stack, top item
+        expect(result.pop()).toBe(7); // top item
+        expect(result.stackLength).toBe(0);
       });
 
-      it("fails silently if stack is empty", function() {
-        result = itp.interpret("drop .l .");
-        expect(result).toBe("0 undefined"); // size of stack, top item
+      it("throws an error if stack is empty", function() {
+        expectThrow('drop');
       });
 
     });
@@ -195,13 +198,12 @@ describe("The Interpreter", function() {
     describe("SWAP function", function() {
 
       it("swaps the top stack item with the one beneath.", function() {
-        result = itp.interpret("4 9 swap .l .");
-        expect(result).toBe("2 4"); // size of stack, top item
+        result = itp.interpret("4 9 swap .");
+        expect(result.pop()).toBe(4);
       });
 
-      it("fails silently if stack is empty", function() {
-        result = itp.interpret("swap .l .");
-        expect(result).toBe("0 undefined"); // size of stack, top item
+      it("throws an error if stack is empty", function() {
+        expectThrow('swap');
       });
 
     });
@@ -210,13 +212,12 @@ describe("The Interpreter", function() {
     describe("OVER function", function() {
 
       it("duplicates the second stack item pushing it on the top.", function() {
-        result = itp.interpret("6 7 over .l .");
-        expect(result).toBe("3 6"); // size of stack, top item
+        result = itp.interpret("6 7 over .");
+        expect(result.pop()).toBe(6);
       });
 
-      it("fails silently if stack is empty", function() {
-        result = itp.interpret("over .l .");
-        expect(result).toBe("0 undefined"); // size of stack, top item
+      it("throws an error if stack is empty", function() {
+        expectThrow('over');
       });
 
     });
@@ -225,15 +226,19 @@ describe("The Interpreter", function() {
     describe("ROLL function", function() {
 
       it("take the third item on the stack and put's it up top", function() {
-        expectResult('1 2 3 2 roll .s', '[2,3,1]');
+        expectResult('1 2 3 2 roll .s', [2,3,1]);
       });
 
       it("take the second item on the stack and put's it up top", function() {
-        expectResult('1 2 3 1 roll .s', '[1,3,2]');
+        expectResult('1 2 3 1 roll .s', [1,3,2]);
       });
 
       it("stays the same", function() {
-        expectResult('1 2 3 0 roll .s', '[1,2,3]');
+        expectResult('1 2 3 0 roll .s', [1,2,3]);
+      });
+
+      it("throws an error if stack is empty", function() {
+        expectThrow('roll');
       });
 
     })
@@ -242,7 +247,7 @@ describe("The Interpreter", function() {
     describe("ROT function", function() {
 
       it("take the third item on the stack and put's it up top", function() {
-        expectResult('1 2 3 rot .s', '[2,3,1]');
+        expectResult('1 2 3 rot .s', [2,3,1]);
       });
 
       it("throws an error if <3 items on the stack", function() {
@@ -259,55 +264,39 @@ describe("The Interpreter", function() {
     describe("+ (PLUS) function", function() {
 
       it("adds the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("7 4 + .l .");
-        expect(result).toBe("1 11");
+        result = itp.interpret("7 4 + .");
+        expect(result.pop()).toBe(11);
       });
 
-      it("returns the top item if alone.", function() {
-        result = itp.interpret("88 + .l .");
-        expect(result).toBe("1 88");
-      });
-
-      it("returns 0 on empty stack.", function() {
-        result = itp.interpret("+ .l .");
-        expect(result).toBe("1 0");
+      it("throws error on less than two numbers.", function() {
+        expectThrow('+');
+        expectThrow('1 +');
       });
     });
 
     describe("* (MULT) function", function() {
 
       it("multiplies the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("6 5 * .l .");
-        expect(result).toBe("1 30");
+        result = itp.interpret("6 5 * .");
+        expect(result.pop()).toBe(30);
       });
 
-      it("returns the top item if alone.", function() {
-        result = itp.interpret("55 * .l .");
-        expect(result).toBe("1 55");
+      it("throws error on less than two numbers.", function() {
+        expectThrow('*');
+        expectThrow('1 *');
       });
-
-      it("returns 1 on empty stack.", function() {
-        result = itp.interpret("* .l .");
-        expect(result).toBe("1 1");
-      });
-
     })
 
     describe("- (MINUS) function", function() {
 
       it("subtracts the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("19 6 - .l .");
-        expect(result).toBe("1 13");
+        result = itp.interpret("19 6 - .");
+        expect(result.pop()).toBe(13);
       });
 
-      it("returns the top negated item if alone.", function() {
-        result = itp.interpret("88 - .l .");
-        expect(result).toBe("1 -88");
-      });
-
-      it("returns 0 on empty stack.", function() {
-        result = itp.interpret("- .l .");
-        expect(result).toBe("1 0");
+      it("throws error on less than two numbers.", function() {
+        expectThrow('-');
+        expectThrow('1 -');
       });
 
     })
@@ -315,37 +304,27 @@ describe("The Interpreter", function() {
     describe("/ (DIV) function", function() {
 
       it("divides the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("35 5 / .l .");
-        expect(result).toBe("1 7");
+        result = itp.interpret("35 5 / .");
+        expect(result.pop()).toBe(7);
       });
 
-      it("returns the '1' if alone.", function() {
-        result = itp.interpret("88 / .l .");
-        expect(result).toBe("1 1");
-      });
-
-      it("returns '1' on empty stack.", function() {
-        result = itp.interpret("/ .l .");
-        expect(result).toBe("1 1");
+      it("throws error on less than two numbers.", function() {
+        expectThrow('/');
+        expectThrow('1 /');
       });
 
     })
 
     describe("% (MOD) function", function() {
 
-      it("divides the top two stack items pushing the result and remainder on the stack.", function() {
-        result = itp.interpret("20 6 % .l . .");
-        expect(result).toBe("2 3 2");
+      it("divides the top two stack items pushing the remainder on the stack.", function() {
+        result = itp.interpret("83 6 % .");
+        expect(result.pop()).toBe(5);
       });
 
-      it("returns '1 & 0' if alone.", function() {
-        result = itp.interpret("66 % .l . .");
-        expect(result).toBe("2 1 0");
-      });
-
-      it("returns '1 & 0' on empty stack.", function() {
-        result = itp.interpret("% .l . .");
-        expect(result).toBe("2 1 0");
+      it("throws error on less than two numbers.", function() {
+        expectThrow('%');
+        expectThrow('1 %');
       });
 
     });
@@ -353,21 +332,21 @@ describe("The Interpreter", function() {
     describe("= (EQUALS) function", function() {
       it("equals uses JavaScript ===", function() {
         // yes
-        expectResult('1 1 = .l .', '1 true');
-        expectResult('1.0 1 = .l .', '1 true');
-        expectResult('0 1.0 + 1 = .l .', '1 true');
-        expectResult('word bob word bob = .l .', '1 true');
+        expectResult('1 1 = .', true);
+        expectResult('1.0 1 = .', true);
+        expectResult('0 1.0 + 1 = .', true);
+        expectResult('word bob word bob = .', true);
         // no
-        expectResult('19 100 = .l .', '1 false');
-        expectResult('word bob word Bob = .l .', '1 false');
-        expectResult('word true true = .l .', '1 false');
+        expectResult('19 100 = .', false);
+        expectResult('word bob word Bob = .', false);
+        expectResult('word true true = .', false);
       });
     });
 
     describe('INC function', function() {
 
       it("increments the top value on the stack", function() {
-        expectResult('4 inc .l .', '1 5');
+        expectResult('4 inc .', 5);
       });
 
     });
@@ -375,7 +354,7 @@ describe("The Interpreter", function() {
     describe('DEC function', function() {
 
       it("decrements the top value on the stack", function() {
-        expectResult('4 dec .l .', '1 3');
+        expectResult('4 dec .', 3);
       });
 
     });
@@ -386,24 +365,22 @@ describe("The Interpreter", function() {
     describe("WORD", function() {
 
       it("drops the next word on the stack.", function() {
-        result = itp.interpret('word bob .l .');
-        expect(result).toBe('1 bob');
+        result = itp.interpret('word bob .');
+        expect(result.pop()).toBe('bob');
       });
 
-      it("fails silently if there is no next word.", function() {
-        itp.interpret('word');
-        result = itp.interpret('.l .');
-        expect(result).toBe('0 undefined');
+      it("throws an error if there is no next word.", function() {
+        expectThrow('word');
       });
 
       it("will pick up any other command as a word.", function() {
         result = itp.interpret('word .l .');
-        expect(result).toBe('.l');
+        expect(result.pop()).toBe('.l');
       });
 
-      it("will push numbers too", function() {
-        result = itp.interpret('word 999 .l .');
-        expect(result).toBe('1 999');
+      it("will push numbers as strings too", function() {
+        result = itp.interpret('word 999 .');
+        expect(result.pop()).toBe('999');
       });
 
     });
@@ -412,17 +389,17 @@ describe("The Interpreter", function() {
 
       it("can find a system word.", function() {
         result = itp.interpret('word dup find .l');
-        expect(result).toBe('1');
+        expect(result.pop()).toBe(1);
       });
 
       it("returns a JavaScript Object.", function() {
         result = itp.interpret('word dup find .');
-        expect(result).toBe('[object Object]');
+        expect(result.pop().name).toBe('dup');
       });
 
       it("can find itself.", function() {
-        result = itp.interpret('word word find .l');
-        expect(result).toBe('1');
+        result = itp.interpret('word word find .');
+        expect(result.pop().name).toBe('word');
       });
 
       it("throws an error when word can not be found.", function() {
@@ -437,12 +414,11 @@ describe("The Interpreter", function() {
 
       it("returns the function ref for a found word.", function() {
         result = itp.interpret('word dup find >cfa .');
-        expect(result).toBeDefined();
+        expect(result.pop()).toBeDefined();
       });
 
-      it("fails silently if no defn object is available.", function() {
-        result = itp.interpret('1 2 3 >cfa .s');
-        expect(result).toBe('[1,2,3]');
+      it("throws an error if no defn object is available.", function() {
+        expectThrow('1 >cfa');
       });
 
     });
@@ -451,8 +427,8 @@ describe("The Interpreter", function() {
 
       it("finds a word and returns it's function", function() {
         result = itp.interpret("' swap .");
-        expect(result).toBeDefined();
-        expect(result).not.toBe(null);
+        expect(result.pop()).toBeDefined();
+        expect(result.pop()).not.toBe(null);
       });
 
     })
@@ -461,7 +437,7 @@ describe("The Interpreter", function() {
 
       it("stores an integer value by name (name, value)", function() {
         result = itp.interpret("word speed 87 ! .l");
-        expect( result ).toBe('0'); // stack length 0
+        expect( result.pop() ).toBe(0); // stack length 0
         expect( itp.valueStore['speed'] ).toEqual(87); // only reach into valueStore for tests.
       });
 
@@ -470,16 +446,13 @@ describe("The Interpreter", function() {
     describe( "@ function", function() {
 
       it("retieves an integer value by name", function() {
-        itp.interpret("word pressure 10102 ! .l");
-        result = itp.interpret("word pressure @ .l .");
-        expect( result ).toBe('1 10102');
+        itp.interpret("word pressure 10102 !");
+        result = itp.interpret("word pressure @ .");
+        expect( result.pop() ).toBe(10102);
       });
 
       it("throws an error if stack is empty", function() {
-        result = function() {
-          itp.interpret("@");
-        };
-        expect(result).toThrow();
+        expectThrow('@');
       });
 
     });
@@ -488,15 +461,12 @@ describe("The Interpreter", function() {
 
       it("it creates a new CustomCommand", function() {
         result = itp.interpret('word spoon create .l');
-        expect(result).toEqual('0');
+        expect(result.pop()).toEqual(0);
         expect(itp.newCommand).toBeDefined();
       });
 
       it("throws an error if no name is supplied.", function() {
-        result = function() {
-          itp.interpret('create');
-        };
-        expect(result).toThrow();
+        expectThrow('create');
       });
 
       it("throws an error if create already called.", function() {
@@ -509,17 +479,17 @@ describe("The Interpreter", function() {
 
     });
 
-    describe("{ and } functions", function() {
+    describe("fn{ and } functions", function() {
 
-      it("{ sets compilationMode to true.", function() {
+      it("fn{ sets compilationMode to true.", function() {
         expect(itp.compilationMode).toBeFalsy();
-        itp.interpret('{');
+        itp.interpret('fn{');
         expect(itp.compilationMode).toBe(true);
       });
 
       it("} sets compilationMode to false and needs to run as immediate.", function() {
         expect(itp.compilationMode).toBeFalsy();
-        itp.interpret('{');
+        itp.interpret('fn{');
         expect(itp.compilationMode).toBe(true);
         itp.interpret('}');
         expect(itp.compilationMode).toBeFalsy();
@@ -530,7 +500,7 @@ describe("The Interpreter", function() {
     describe("; (SEMICOLON) function", function() {
 
       it("exits compilation mode.", function() {
-        itp.interpret('{');
+        itp.interpret('fn{');
         expect(itp.compilationMode).toBeTruthy();
         itp.interpret(';');
         expect(itp.compilationMode).toBeFalsy();
@@ -547,7 +517,7 @@ describe("The Interpreter", function() {
       it("creates a findable item in the dictionary.", function() {
         itp.interpret('word newby create ;');
         result = itp.interpret('word newby find .l');
-        expect(result).toBe('1');
+        expect(result.pop()).toBe(1);
       });
 
       it("clears newCommand variable.", function() {
@@ -579,33 +549,32 @@ describe("The Interpreter", function() {
         itp.interpret(': cuckoo ;');
         var result2;
         result = function() {
-          result2 = itp.interpret("word cuckoo find .l");
+          result2 = itp.interpret("word cuckoo find .");
         };
         expect(result).not.toThrow();
-        expect(result2).toBe('1');
-        // not sure how to test validity of find result, maybe I don't need to yet.
+        expect(result2.pop().name).toBe('cuckoo');
       });
 
       it("can create a word which can call other functions.", function() {
         itp.interpret(': dup+ dup + ;');
-        result = itp.interpret('23 dup+ .l .');
-        expect(result).toBe('1 46');
+        result = itp.interpret('23 dup+ .');
+        expect(result.pop()).toBe(46);
       });
 
     });
 
-    describe("LIT", function() {
+    describe("LIT function", function() {
 
       it("puts the following command as a literal on the stack.", function() {
-        result = itp.interpret('lit 99 .l .');
-        expect(result).toBe('1 99');
-        result = itp.interpret('lit help_me_rhonda! .l .');
-        expect(result).toBe('1 help_me_rhonda!');
+        result = itp.interpret('lit 99 .');
+        expect(result.pop()).toBe(99);
+        result = itp.interpret('lit help_me_rhonda! .');
+        expect(result.pop()).toBe('help_me_rhonda!');
       });
 
       it("puts the following command as a literal on the stack in compilation more.", function() {
-        result = itp.interpret('{ lit 47 } exec .l .');
-        expect(result).toBe('1 47');
+        result = itp.interpret('fn{ lit 47 } exec .');
+        expect(result.pop()).toBe(47);
       });
 
     });
@@ -622,24 +591,24 @@ describe("The Interpreter", function() {
     it("calling the redefined word in the definition should succeed.", function() {
       itp.interpret(': anum 333 ;');
       itp.interpret(': anum anum 222 ;');
-      expectResult('anum .l .s', '2 [333,222]');
+      expectResult('anum .s', [333,222]);
     });
   });
 
   describe("Anonymous Functions", function() {
 
-    describe("{", function() {
+    describe("fn{", function() {
 
       it("creates an anonymous function on the stack", function() {
-        expectResult('{ dup + } 7 swap exec .l .', '1 14');
+        expectResult('7 fn{ dup + } exec .', 14);
       });
 
     });
 
-    describe("exec", function() {
+    describe("EXEC function", function() {
 
       it("can run a function on the stack", function() {
-        expectResult('12 19 word + find exec .l .', '1 31');
+        expectResult('12 19 word + find exec .', 31);
       });
 
     });
@@ -648,27 +617,166 @@ describe("The Interpreter", function() {
 
   describe("Arrays", function() {
 
-    it("are defined using '[' and ']'", function() {
+    it("are defined using '[' and ']'.", function() {
       result = itp.interpret('[ 1 2 3 ] .l .s');
-      expect(result).toBe('1 [[1,2,3]]');
+      expect(result.pop()).toEqual([[1,2,3]]);
+      expect(result.stackLength).toBe(1);
     });
 
     it("are a single item on the stack", function() {
-      expectResult('[ 5 6 7 8 9 10 11 ] .l', '1');
+      expectResult('[ 5 6 7 8 9 10 11 ] .l', 1);
     });
 
     it("can be checked for with array?", function() {
-      expectResult('[ 9 ] array? .', 'true');
-      expectResult('9 array? .', 'false');
+      expectResult('[ 9 ] array? .', true);
+      expectResult('9 array? .', false);
     });
 
     it("can be an empty array", function() {
-      expectResult('[ ] array? .', 'true');
+      expectResult('[ ] array? .', true);
     });
 
     xit("can be nested", function() {
       expectResult('[ 1 [ 2 ] 3 ] .l .s', '1 null');
     });
+
+  });
+
+  describe("Objects", function() {
+
+    it("are defined using '{' and '}'.", function() {
+      result = itp.interpret('{ } dup object? . .');
+      expect(result.data).toEqual([true, {}]);
+    });
+
+    it("can have properties set in pairs", function() {
+      result = itp.interpret('{ a 17 } dup object? . .');
+      expect(result.data[0]).toBe(true);
+      expect(result.data[1]).toEqual({ a: 17 });
+    });
+
+    it("throws an error if there an odd number of keys+values", function() {
+      expectThrow('{ jeff 1999 oops }');
+    });
+
+  })
+
+  // what sort of a word is interop?
+  describe("JavaScript interoperability", function() {
+
+    // proxy class for JS communication
+    var JSWorld = function() {
+      var self = this;
+
+      // access at the root level
+      this.rootCount = 23;
+      this.rootHeat = 88.97;
+      this.rootName = 'Rudolph';
+      this.rootHello = function() {
+        return "Hello from Root!";
+      };
+      this.rootAdd = function(num) {
+        self.rootCount += num;
+      };
+      this.rootNames = [
+        "Anne", "Bobby", "Catherine", "Dave", "Esther", "Fred", "Gill",
+        "Henry", "Ida", "Joseph", "Kate", "Lyndon", "Marie", "Neil"
+      ];
+      this.rootDomain = {
+        title: 'Domain',
+        count: 99
+      };
+
+      // nested access (within arrays, objects, functions)
+    };
+
+    // create local variables for this section to test JS interoperability.
+    var forthInt, jsWorld, jsResult;
+
+    beforeEach(function() {
+      jsWorld = new JSWorld();
+      forthInt = new salliedforth.Interpreter( jsWorld );
+    })
+
+    describe("from Sallied-Forth", function() {
+
+      describe("getting JS properties", function() {
+        it("can get integers", function() {
+          jsResult = forthInt.interpret('js@ rootCount .l .');
+          expect(jsResult.data).toEqual([1,23]);
+        });
+        it("can get floats", function() {
+          jsResult = forthInt.interpret('js@ rootHeat .l .');
+          expect(jsResult.data).toEqual([1,88.97]);
+        });
+        it("can get strings", function() {
+          jsResult = forthInt.interpret('js@ rootName .');
+          expect(jsResult.pop()).toEqual('Rudolph');
+        });
+
+        it("can get arrays", function() {
+          jsResult = forthInt.interpret('js@ rootNames array? .');
+          expect(jsResult.pop()).toEqual(true);
+        });
+
+        it("can get objects", function() {
+          jsResult = forthInt.interpret('js@ rootDomain object? .');
+          expect(jsResult.pop()).toEqual(true);
+        });
+
+        it("throws an error if property doesn't exist", function() {
+          expectThrow("js@ jabberwocky729");
+        });
+      });
+
+      describe("setting JS properties", function() {
+        it("can set integers", function() {
+          forthInt.interpret('90 js! rootCount');
+          jsResult = forthInt.interpret('js@ rootCount .l .');
+          expect(jsResult.data).toEqual([1,90]);
+        });
+        it("can set floats", function() {
+          forthInt.interpret('13.789 js! rootHeat');
+          jsResult = forthInt.interpret('js@ rootHeat .l .');
+          expect(jsResult.data).toEqual([1,13.789]);
+        });
+        it("can set strings", function() {
+          forthInt.interpret('word BorisJingle js! rootName');
+          jsResult = forthInt.interpret('js@ rootName .');
+          expect(jsResult.pop()).toEqual('BorisJingle');
+        });
+
+        it("can set arrays", function() {
+          forthInt.interpret('[ 1 2 3 ] js! rootNames');
+          jsResult = forthInt.interpret('js@ rootNames array? .');
+          expect(jsResult.pop()).toEqual(true);
+        });
+
+        it("can set objects", function() {
+          forthInt.interpret('{ b 4 } js! rootDomain');
+          jsResult = forthInt.interpret('js@ rootDomain object? .');
+          expect(jsResult.pop()).toEqual(true);
+        });
+
+        it("throws an error if propertyName missing", function() {
+          expectThrow("99 js!");
+        });
+      });
+
+
+
+
+      describe("calling JS functions", function() {
+
+      });
+
+    })
+
+    describe("from JavaScript", function() {
+
+
+
+    })
 
   });
 
