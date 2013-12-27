@@ -533,6 +533,15 @@
       self.pushToDataStack( Array.isArray( self.popFromDataStack() ) );
     });
 
+    this.addToDictionary('concat', function() {
+      var arr1 = self.popFromDataStack();
+      if( Array.isArray(arr1) ) {
+        self.pushToDataStack( arr1.concat( self.popFromDataStack() ) );
+      } else {
+        self.error('first item on the stack needs to be an array for concat');
+      }
+    });
+
     // ROT
     this.interpret(': rot ( a b c -- b c a ) 2 roll ;');
 

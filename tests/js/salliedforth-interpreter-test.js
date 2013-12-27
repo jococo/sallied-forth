@@ -647,13 +647,29 @@ describe("The Interpreter", function() {
   });
 
   describe("Arrays", function() {
+
     it("are defined using '[' and ']'", function() {
       result = itp.interpret('[ 1 2 3 ] .l .s');
       expect(result).toBe('1 [[1,2,3]]');
     });
+
     it("are a single item on the stack", function() {
       expectResult('[ 5 6 7 8 9 10 11 ] .l', '1');
     });
+
+    it("can be checked for with array?", function() {
+      expectResult('[ 9 ] array? .', 'true');
+      expectResult('9 array? .', 'false');
+    });
+
+    it("can be an empty array", function() {
+      expectResult('[ ] array? .', 'true');
+    });
+
+    xit("can be nested", function() {
+      expectResult('[ 1 [ 2 ] 3 ] .l .s', '1 null');
+    });
+
   });
 
 });
