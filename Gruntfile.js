@@ -40,11 +40,28 @@ module.exports = function(grunt) {
           }
         ]
       }
+    },
+    watch: {
+      scripts: {
+        files: ['src/**/*.js'],
+        tasks: ['uglify', 'copy:test'],
+        options: {
+          debounceDelay: 250
+        }
+      },
+      resources: {
+        files: ['src/*.html', 'src/css/*.css'],
+        tasks: ['copy:build'],
+        options: {
+          debounceDelay: 250
+        }
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 
   grunt.registerTask('default', ['uglify']);
   grunt.registerTask('build', ['uglify', 'copy:build', 'copy:test']);

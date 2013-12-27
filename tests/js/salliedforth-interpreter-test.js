@@ -14,7 +14,7 @@ describe("The Interpreter", function() {
   function expectThrow( inStr ) {
     result = function() {
       itp.interpret(inStr);
-    }
+    };
     expect(result).toThrow();
   }
 
@@ -62,7 +62,7 @@ describe("The Interpreter", function() {
     });
 
     it("continues until false is on top of stack", function() {
-      expectResult("[ false ] true while .l", '0');
+      expectResult("{ false } true while .l", '0');
     });
 
   });
@@ -109,7 +109,7 @@ describe("The Interpreter", function() {
 
     it("can print out it's contents.", function() {
       result = itp.interpret('17 word frank .s');
-      expect(result).toBe('[17,frank]');
+      expect(result).toBe('[17,"frank"]');
     });
 
     // . function, shows the top item on the stack
@@ -509,19 +509,19 @@ describe("The Interpreter", function() {
 
     });
 
-    describe("[ and ] functions", function() {
+    describe("{ and } functions", function() {
 
-      it("[ sets compilationMode to true.", function() {
+      it("{ sets compilationMode to true.", function() {
         expect(itp.compilationMode).toBeFalsy();
-        itp.interpret('[');
+        itp.interpret('{');
         expect(itp.compilationMode).toBe(true);
       });
 
-      it("] sets compilationMode to false and needs to run as immediate.", function() {
+      it("} sets compilationMode to false and needs to run as immediate.", function() {
         expect(itp.compilationMode).toBeFalsy();
-        itp.interpret('[');
+        itp.interpret('{');
         expect(itp.compilationMode).toBe(true);
-        itp.interpret(']');
+        itp.interpret('}');
         expect(itp.compilationMode).toBeFalsy();
       });
 
@@ -530,7 +530,7 @@ describe("The Interpreter", function() {
     describe("; (SEMICOLON) function", function() {
 
       it("exits compilation mode.", function() {
-        itp.interpret('[');
+        itp.interpret('{');
         expect(itp.compilationMode).toBeTruthy();
         itp.interpret(';');
         expect(itp.compilationMode).toBeFalsy();
@@ -540,7 +540,7 @@ describe("The Interpreter", function() {
         var oldDictionaryHead = itp.dictionaryHead;
         itp.interpret("word aaa create");
         expect(oldDictionaryHead).toEqual(itp.dictionaryHead);
-        itp.interpret("] ;");
+        itp.interpret("} ;");
         expect(oldDictionaryHead).not.toEqual(itp.dictionaryHead);
       });
 
@@ -604,7 +604,7 @@ describe("The Interpreter", function() {
       });
 
       it("puts the following command as a literal on the stack in compilation more.", function() {
-        result = itp.interpret('[ lit 47 ] exec .l .');
+        result = itp.interpret('{ lit 47 } exec .l .');
         expect(result).toBe('1 47');
       });
 
@@ -628,10 +628,10 @@ describe("The Interpreter", function() {
 
   describe("Anonymous Functions", function() {
 
-    describe("[", function() {
+    describe("{", function() {
 
       it("creates an anonymous function on the stack", function() {
-        expectResult('[ dup + ] 7 swap exec .l .', '1 14');
+        expectResult('{ dup + } 7 swap exec .l .', '1 14');
       });
 
     });
@@ -644,6 +644,16 @@ describe("The Interpreter", function() {
 
     });
 
+  });
+
+  describe("Arrays", function() {
+    it("are defined using '[' and ']'", function() {
+      result = itp.interpret('[ 1 2 3 ] .l .s');
+      expect(result).toBe('1 [[1,2,3]]');
+    });
+    it("are a single item on the stack", function() {
+
+    });
   });
 
 });

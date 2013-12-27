@@ -14,9 +14,28 @@
     };
     this.prev = prev;
     this.functions = [];
-    this.addFunction = function( fn2 ) {
-      if( typeof fn2 !== 'function') {self.errorFn("addFunction can only be called with a function ref as argument!");}
-      self.functions.push( fn2 );
+    this.add = function( fn2 ) {
+      if( typeof fn2 === 'function') {
+        // self.errorFn("add can only be called with a function ref as argument!");
+        self.functions.push( fn2 );
+      } else {
+        self.functions.push( function() {
+          scope.pushToDataStack( (function(item) {
+            return item;
+          })(fn2) );
+        } );
+      }
+    };
+  };
+
+  var ArrayCommand = function( scope ) {
+    var self = this;
+    this._data = [];
+    this.fn = function() { // TODO maybe we should pass in this function? TMI for Array.
+      scope.pushToDataStack( self._data );
+    };
+    this.add = function( item ) {
+      self._data.push( item );
     };
   };
 
@@ -44,11 +63,13 @@
       this.versionString = this.versionString + '.' + this.version.revision;
     }
 
+    // log function
     this.log = function(txt) {
       self.logFn && self.logFn( txt );
       return void 0;
     };
 
+    // error function
     this.error = function( txt ) {
       self.errorFn && self.errorFn( txt );
       return void 0;
@@ -153,19 +174,14 @@
                 commandDefn.fn();
               } else {
                 // add it to this commands list of commands
-                self.newCommand.addFunction( commandDefn.fn );
+                self.newCommand.add( commandDefn.fn );
               }
             } else {
               self.executeWords(nextCommandName);
             }
           } else {
             if( self.compilationMode ) {
-              self.newCommand.addFunction(
-                                          (function(num) {
-                return function() {
-                  self.pushToDataStack(num);
-                };
-              } )(flN));
+              self.newCommand.add(flN);
             } else {
               self.pushToDataStack(flN);
             }
@@ -224,7 +240,9 @@
       if( self.dataStack.length < 1 ) {
         self.log('[stack empty]');
       } else {
-        self.log( '[' + self.dataStack.join(",") + ']');
+        self.log( '[' + self.dataStack.map(function(item) {
+          return JSON.stringify(item);
+        }).join(",") + ']');
       }
     });
 
@@ -425,6 +443,8 @@
 
     }, true);
 
+    // Defining Words
+
     this.addToDictionary("'", function() {
       self.executeWords('word', 'find', '>cfa'); // , 'next' TODO find out what 'next' does.
     });
@@ -442,14 +462,14 @@
       self.error("CREATE needs a name.");
     });
 
-    this.addToDictionary('[', function() {
+    this.addToDictionary('{', function() {
       self.compilationMode = true;
       if( !self.newCommand ) {
         self.newCommand = new CustomCommand( "Anonymous", undefined, self );
       }
     });
 
-    this.addToDictionary(']', function() {
+    this.addToDictionary('}', function() {
       self.compilationMode = false;
       if( self.newCommand ) {
         self.pushToDataStack( self.newCommand );
@@ -466,7 +486,7 @@
         var cmd = self.popFromDataStack();
         if( typeof cmd === 'function' ) {
           cmd.call( self );
-        } else if (cmd.fn) { // most liekly a command definition
+        } else if (cmd.fn) { // most likely a command definition
           cmd.fn.call(self);
         } else {
           self.error('' + cmd + ' is not executable!');
@@ -477,7 +497,7 @@
     });
 
     this.addToDictionary(';', function() {
-      self.executeWords(']');
+      self.executeWords('}');
       var cmd = self.popFromDataStack();
       if( cmd ) {
         if( cmd && cmd.name ) {
@@ -491,7 +511,26 @@
     }, true);
 
     this.addToDictionary(':', function() {
-      self.executeWords('word', 'create', '[');
+      self.executeWords('word', 'create', '{');
+    });
+
+    // Defining Arrays
+
+    this.addToDictionary('[', function() {
+      self.compilationMode = true;
+      self.newCommand = new ArrayCommand(self);
+    });
+
+    this.addToDictionary(']', function() {
+      self.compilationMode = false;
+      if( self.newCommand ) {
+        self.newCommand.fn();
+        self.newCommand = void 0;
+      }
+    }, true);
+
+    this.addToDictionary('array?', function() {
+      self.pushToDataStack( Array.isArray( self.popFromDataStack() ) );
     });
 
     // ROT
