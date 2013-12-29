@@ -33,26 +33,37 @@ Tests are included and run from the main index.html page at present. This projec
 
 Most features have been developed with accompanying tests and they will be enhanced as the project evolves.
 
+## Possible Enhancements
+
+- some kind of async messaging between forth and javascript.
+- persistence for forth scripts.
+
+
 ## TODO
 
-- BREAKING CHANGES!! start
-- [ ] interpreter will return a list of results in JS native datastructures where possible, will probably wrap with an error status. This is to improve JS interop.
-- [ ] result format will be: {data: [<array of values>...], status: TBD}, possibly a JS pseudo class, so that status codes can be standardised.
-- BREAKING CHANGES!! end
 
 - [ ] look into vocabularies / namespaces?
   *- [ ] also tidy order of word-sets
-- [ ] loops or recursion or both
+- [x][ ][ ] loops or recursion or both
   *- [ ] is recursion possible?
 - [ ] decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
-- [ ] collections
-  js arrays, objects (Is this a good time to look at mori?)
 - [ ] javascript interop
+  - [x] pass JS context into interpreter
+  - [x] getting JS property values
+  - [x] setting JS property values
+  - [ ] execute JS function (no params)
+  - [ ] execute JS function (w/ params)
 - [ ] run test auto with Grunt
 - [ ] REPL input needs history
 
 ## DONE
 
+- [x] collections [27/12/2013]
+  js arrays, objects (Is this a good time to look at mori?)
+- BREAKING CHANGES!! start [all 27/12/2013]
+- [x] interpreter will return a list of results in JS native datastructures where possible, will probably wrap with an error status. This is to improve JS interop.
+- [x] result format will be: {data: [<array of values>...], status: TBD, stackLength: 1}, a JS class ResponseData, so that status codes can be standardised.
+- BREAKING CHANGES!! end
 - [x] Errors are thrown by default now, can be overriden by setting your own error function. [26/12/2013]
 - [x] Grunt build and test tags [26/12/2013]
 - [x] word definitions in forth at startup! [26/12/2013]
