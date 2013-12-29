@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SalliedForth - Play 1</title>
+    <link rel="stylesheet" href="/build/css/style.css">
+  </head>
+  <body>
+    <div class="menubar">
+      <ul>
+        <li><a href="/build/">Main REPL</a></li>
+        <li><a href="/tests/">Tests &amp; REPL</a></li>
+        <li><a href="/examples/">Examples</a></li>
+      </ul>
+    </div>
+    <h1>SalliedForth</h1>
+    <h2>Play 1</h2>
+    <div class="example">
+
+      <h3>Simple Event Handler</h3>
+      <button id="hello">Hello</button>
+      <button id="goodbye">Goodbye</button>
+      <div id="output" class="outputBox">...</div>
+    </div>
+
+    <h3>Interact with the example</h3>
+    <textarea id="logBox" class="codebox" cols="80" rows="10" readonly>OK.</textarea>
+    <br />
+    <textarea id="inputBox" class="codebox" cols="80" rows="14" >
+[ hey! ] js-> alert</textarea>
+
+    <button class="runButton" id="run1">Run</button>
+    <div>
+      <a href="/tests/index.html">Main REPL with tests.</a>
+    </div>
+
+    <script src="/build/js/salliedforth.min.js"></script>
+    <script>
+      var self = this;
+      var interpreter = new salliedforth.Interpreter(window);
+      var inputter    = document.getElementById('inputBox');
+      var logText     = document.getElementById('logBox');
+      var runBtn      = document.getElementById('run1');
+
+      var log = function( txt ) {
+        var oldText = logText.value;
+        logText.value = oldText + '\n' + JSON.stringify( txt );
+        logText.scrollTop = logText.scrollHeight;
+      };
+
+      interpreter.setLogFunction( log );
+      interpreter.setErrorFunction( log );
+
+      runBtn.onclick = function() {
+        interpreter.interpret( inputter.value );
+      };
+
+    </script>
+  </body>
+</html>

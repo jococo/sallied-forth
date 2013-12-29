@@ -1,6 +1,50 @@
 body {
   font-family: "Helvetica Neue";
   color: #224;
+  padding: 0;
+  margin: 5px;
+}
+
+.menubar {
+  padding: 5px 18px;
+  margin: 0;
+}
+
+.menubar ul {
+  padding: 0;
+  margin: 0;
+}
+
+.menubar li {
+  display: inline-block;
+  margin: 0 18px;
+}
+
+.menubar li a {
+  text-decoration: none;
+  color: #224;
+  text-transform: lowercase;
+}
+
+.menubar li a:hover {
+  text-decoration: underline;
+}
+
+.example {
+  border: 1px solid gray;
+  padding: 32px;
+  background-color: #f6f6f6;
+}
+
+.outputBox {
+  background-color: white;
+  margin: 9px 0;
+  padding: 17px;
+}
+
+.runButton {
+  font-size: 200%;
+  padding: 17px 32px;
 }
 
 .codebox {
