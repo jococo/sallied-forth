@@ -17,13 +17,13 @@
     <script src="js/salliedforth.js"></script>
     <script>
       var self = this;
-      var interpreter = new salliedforth.Interpreter();
+      var interpreter = new salliedforth.Interpreter(window);
       var inputter = document.getElementById('inputBox');
       var logText = document.getElementById('logBox');
 
       var log = function( txt ) {
         var oldText = logText.value;
-        logText.value = oldText + '\n' + txt;
+        logText.value = oldText + '\n' + JSON.stringify( txt );
         logText.scrollTop = logText.scrollHeight;
       }
 

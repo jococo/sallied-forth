@@ -79,11 +79,46 @@
     this.executeAfterCreation = true;
   };
 
+  /**
+    * A Stack implementation. Kinda useful in Forth.
+    */
+  var Stack = function(name) {
+    var self = this;
+    this.name = name;
+    this._stack = [];
+    this.push = function( item ) { // TODO should this be variadic?
+      self._stack.push( item );
+      return self; // TODO do we need to return anything?
+    };
+    this.pop = function() {
+      return self._stack.pop();
+    };
+    // return the top item without removing it.
+    this.current = function() {
+      return self._stack[self._stack.length - 1];
+    };
+    this.clear = function() {
+      self._stack.length = 0; // DC does it this way.
+      return self;
+    };
+    this.isEmpty = function() {
+      return self._stack.length < 1;
+    };
+  };
+
+  var CommandStack = function() {
+    Stack.call( this, "Command Stack" ); // call the Stack constructor
+    var self = this;
+    this.addToCurrent = function( item ) {
+      self.current().add( item );
+    };
+  };
+
   var ResponseData = function(status) {
     var self = this;
     this.data = [];
     this.status = status;
-    this.stackLength = 0;
+    this.stackSize = 0;
   };
 
   ResponseData.prototype.push = function(item) {
@@ -99,8 +134,25 @@
 
     this.dataStack = [];
     this.returnStack = [];
-    this.dictionary = undefined;
     this.dictionaryHead = undefined;
+
+    this.newCommands = new CommandStack();
+
+    // keeps track of the level of nesting
+    // TODO do we need to clear this on error?
+    this._compilationModeStack = new Stack();
+
+    this.compilationMode = function() {
+      return !!this._compilationModeStack.current();
+    };
+
+    this.enterCompilationMode = function() {
+      this._compilationModeStack.push(true);
+    };
+
+    this.leaveCompilationMode = function() {
+      this._compilationModeStack.pop();
+    };
 
     this.valueStore = mergeIn(world || {}, {'false': false, 'true': true});
 
@@ -147,7 +199,7 @@
         var newNode = {name: name, fn: fn, prev: self.dictionaryHead, immediate: !!imm};
         self.dictionaryHead = newNode;
       } else {
-        self.dictionary = self.dictionaryHead = {name: name, fn: fn, immediate: !!imm};
+        self.dictionaryHead = {name: name, fn: fn, immediate: !!imm};
       }
     };
 
@@ -226,7 +278,7 @@
           var flN = parseFloat(nextCommandName);
           if( isNaN(flN) ) {
 
-            if( self.compilationMode ) {
+            if( self.compilationMode() ) {
               // in compilationMode
               var commandDefn = self.findDefinition(nextCommandName);
               if( commandDefn ) {
@@ -235,17 +287,17 @@
                   commandDefn.fn();
                 } else {
                   // add it to this commands list of commands
-                  self.newCommand.add( commandDefn.fn );
+                  self.newCommands.addToCurrent( commandDefn.fn );
                 }
               } else { // if it's not a command try adding it to the new command anyway
-                self.newCommand.add( nextCommandName );
+                self.newCommands.addToCurrent( nextCommandName );
               }
             } else {
               self.executeWords(nextCommandName);
             }
           } else {
-            if( self.compilationMode ) {
-              self.newCommand.add(flN);
+            if( self.compilationMode() ) {
+              self.newCommands.addToCurrent(flN);
             } else {
               self.pushToDataStack(flN);
             }
@@ -256,11 +308,11 @@
 
     this.interpret = function(txt) {
       self.response = new ResponseData('OK.');
-      self.commands = txt.split(' ');
-      // response = self.commands;
+      self.commands = txt.split(/ +/);
+
       self.processCommands();
-      // self.log( self.response );
-      self.response.stackLength = self.dataStack.length;
+
+      self.response.stackSize = self.dataStack.length;
       return self.response;
     };
 
@@ -364,6 +416,17 @@
     this.addToDictionary('js!', function() {
       self.executeString('word');
       self.executeString('swap !');
+    });
+
+    this.addToDictionary('js->', function() {
+      var args = self.popFromDataStack();
+      self.executeString('word @');
+      // self.executeString('swap');
+      var fn = self.popFromDataStack();
+      var result = fn.apply(self.valueStore, args);
+      if( result !== undefined ) {
+        self.pushToDataStack( result );
+      }
     });
 
     // Maths words
@@ -515,40 +578,43 @@
     });
 
     this.addToDictionary('create', function() {
-      if(self.newCommand) {
-        self.error('Already compiling ' + self.newCommand.name + '!');
-      }
+      // TODO is this still needed?
+      // if(self.newCommands) {
+      //   self.error('Already compiling ' + self.newCommands.name + '!');
+      // }
       if( self.dataStack.length > 0) {
         // get the object ready
         var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self );
-        self.newCommand =  cmd;
+        self.newCommands.push( cmd );
         return;
       }
       self.error("CREATE needs a name.");
     });
 
     this.addToDictionary('fn{', function() {
-      self.compilationMode = true;
-      if( !self.newCommand ) {
-        self.newCommand = new CustomCommand( "Anonymous", undefined, self );
-      }
+      self.newCommands.push( new CustomCommand( "Anonymous", undefined, self ) );
+      self.enterCompilationMode(); // ->C
     });
 
     this.addToDictionary('}', function() {
-      self.compilationMode = false;
-      if( self.newCommand ) { // TODO temporary check, may need to provide a default flag in CustomCommand
-        self.pushToDataStack( self.newCommand );
-        if( self.newCommand.executeAfterCreation ) {
+      self.leaveCompilationMode(); // <-C
+      if( self.newCommands.current() ) { // TODO temporary check, may need to provide a default flag in CustomCommand
+        var latest = self.newCommands.pop();
+        self.pushToDataStack( latest );
+        if( latest.executeAfterCreation ) {
           self.executeWords('exec');
         }
-        self.newCommand = void 0;
+        // TODO untested array nesting code!
+        if( self.newCommands.current() && self.compilationMode() ) {
+          self.newCommands.addToCurrent( self.popFromDataStack() );
+        }
       }
     }, true);
 
     // for the moment this will try to act smart and
     // will test whether the top item on the stack
     // is a function or a CustomCommand
-    // may spli this up into two words if it looks unwieldy
+    // may split this up into two words if it looks unwieldy
     this.addToDictionary('exec', function() {
       if( self.dataStack.length > 0 ) {
         var cmd = self.popFromDataStack();
@@ -579,21 +645,26 @@
     }, true);
 
     this.addToDictionary(':', function() {
-      self.executeWords('word', 'create', 'fn{');
+      self.executeWords('word', 'create'); // , 'fn{');
+      self.enterCompilationMode();
     });
 
     // Defining Arrays
 
     this.addToDictionary('[', function() {
-      self.compilationMode = true;
-      self.newCommand = new ArrayCommand(self);
-    });
+      self.newCommands.push( new ArrayCommand(self) );
+      self.enterCompilationMode(); // ->C
+    }, true);
 
     this.addToDictionary(']', function() {
-      self.compilationMode = false;
-      if( self.newCommand ) {
-        self.newCommand.fn();
-        self.newCommand = void 0;
+      self.leaveCompilationMode(); // <-C
+      if( self.newCommands.current() ) {
+        self.newCommands.current().fn();
+        self.newCommands.pop();
+        // TODO untested array nesting code!
+        if( self.newCommands.current() && self.compilationMode() ) {
+          self.newCommands.addToCurrent( self.popFromDataStack() );
+        }
       }
     }, true);
 
@@ -601,14 +672,19 @@
       self.pushToDataStack( Array.isArray( self.popFromDataStack() ) );
     });
 
+    // empty array, useful for call JS funcs with no params
+    this.addToDictionary('[]', function() {
+      self.pushToDataStack([]);
+    });
+
     // Defining Objects
 
     // only need the opening word as } is defined for functions fn{
     // but still works for objects
     this.addToDictionary('{', function() {
-      self.compilationMode = true;
-      self.newCommand = new ObjectCommand(self);
-    });
+      self.newCommands.push( new ObjectCommand(self) );
+      self.enterCompilationMode(); // ->C
+    }, true);
 
     this.addToDictionary('object?', function() {
       var obj = self.popFromDataStack();
@@ -624,8 +700,8 @@
       }
     });
 
-    // ROT
-    this.interpret(': rot ( a b c -- b c a ) 2 roll ;');
+    // ROT ( a b c -- b c a )
+    this.interpret(': rot 2 roll ;');
 
     // increment the top number on the stack
     this.interpret( ': inc 1 + ;' );
@@ -638,7 +714,7 @@
       if( node ) {
         do {
           self.log(node.name);
-        } while (node = node.prev);
+        } while (!!(node = node.prev));
       }
     }, true);
 

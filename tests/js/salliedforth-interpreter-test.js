@@ -9,7 +9,7 @@ describe("The Interpreter", function() {
   function expectResult( inStr, out ) {
     result = itp.interpret(inStr);
     var resultFirst = result.pop();
-    if( Array.isArray( out ) ) {
+    if( Array.isArray( out ) || (out === Object(out)) ) {
       expect(resultFirst).toEqual(out);
     } else {
       expect(resultFirst).toBe(out);
@@ -27,6 +27,11 @@ describe("The Interpreter", function() {
 
   it("is at version 0.0.1", function() {
     expect(itp.versionString).toBe('0.0.1');
+  });
+
+  it("shouldn't get confused by multiple spaces", function() {
+    expectResult('3 2  + .', 5);
+    expectResult('9        7  *   .   ', 63);
   });
 
   describe("Value Store", function() {
@@ -185,7 +190,7 @@ describe("The Interpreter", function() {
       it("drops the top stack item.", function() {
         result = itp.interpret("7 8 drop .l .");
         expect(result.pop()).toBe(7); // top item
-        expect(result.stackLength).toBe(0);
+        expect(result.stackSize).toBe(0);
       });
 
       it("throws an error if stack is empty", function() {
@@ -460,21 +465,13 @@ describe("The Interpreter", function() {
     describe("CREATE", function() {
 
       it("it creates a new CustomCommand", function() {
-        result = itp.interpret('word spoon create .l');
-        expect(result.pop()).toEqual(0);
-        expect(itp.newCommand).toBeDefined();
+        result = itp.interpret('word spoon create .s');
+        expect(result.stackSize).toEqual(0);
+        expect(itp.newCommands.current()).toBeDefined();
       });
 
       it("throws an error if no name is supplied.", function() {
         expectThrow('create');
-      });
-
-      it("throws an error if create already called.", function() {
-        itp.interpret('word andy create');
-        result = function() {
-          itp.interpret('word gill create');
-        };
-        expect(result).toThrow();
       });
 
     });
@@ -482,17 +479,17 @@ describe("The Interpreter", function() {
     describe("fn{ and } functions", function() {
 
       it("fn{ sets compilationMode to true.", function() {
-        expect(itp.compilationMode).toBeFalsy();
+        expect(itp.compilationMode()).toBeFalsy();
         itp.interpret('fn{');
-        expect(itp.compilationMode).toBe(true);
+        expect(itp.compilationMode()).toBe(true);
       });
 
       it("} sets compilationMode to false and needs to run as immediate.", function() {
-        expect(itp.compilationMode).toBeFalsy();
+        expect(itp.compilationMode()).toBeFalsy();
         itp.interpret('fn{');
-        expect(itp.compilationMode).toBe(true);
+        expect(itp.compilationMode()).toBe(true);
         itp.interpret('}');
-        expect(itp.compilationMode).toBeFalsy();
+        expect(itp.compilationMode()).toBeFalsy();
       });
 
     });
@@ -501,9 +498,9 @@ describe("The Interpreter", function() {
 
       it("exits compilation mode.", function() {
         itp.interpret('fn{');
-        expect(itp.compilationMode).toBeTruthy();
+        expect(itp.compilationMode()).toBeTruthy();
         itp.interpret(';');
-        expect(itp.compilationMode).toBeFalsy();
+        expect(itp.compilationMode()).toBeFalsy();
       });
 
       it("updates dictionaryHead.", function() {
@@ -542,7 +539,7 @@ describe("The Interpreter", function() {
 
       it("creates a new word.", function() {
         itp.interpret(': monolith ;');
-        expect(itp.compilationMode).toBeFalsy();
+        expect(itp.compilationMode()).toBeFalsy();
       });
 
       it("creates a findable word.", function() {
@@ -618,9 +615,9 @@ describe("The Interpreter", function() {
   describe("Arrays", function() {
 
     it("are defined using '[' and ']'.", function() {
-      result = itp.interpret('[ 1 2 3 ] .l .s');
+      result = itp.interpret('[ 1 2 3 ] .s');
       expect(result.pop()).toEqual([[1,2,3]]);
-      expect(result.stackLength).toBe(1);
+      expect(result.stackSize).toBe(1);
     });
 
     it("are a single item on the stack", function() {
@@ -636,9 +633,6 @@ describe("The Interpreter", function() {
       expectResult('[ ] array? .', true);
     });
 
-    xit("can be nested", function() {
-      expectResult('[ 1 [ 2 ] 3 ] .l .s', '1 null');
-    });
 
   });
 
@@ -659,7 +653,51 @@ describe("The Interpreter", function() {
       expectThrow('{ jeff 1999 oops }');
     });
 
+  });
+
+  describe("Nesting", function() {
+
+    it("Arrays can be nested in Arrays", function() {
+      expectResult('[ 1 [ 2 ] 3 ] .', [1,[2],3]);
+    });
+
+    it("Arrays can be nested in Arrays can be nested in Arrays", function() {
+      expectResult('[ 19 [ 1 [ 2 ] 3 ] 99 ] .', [ 19, [ 1, [ 2 ], 3 ], 99 ]);
+    });
+
+    it("Arrays can be nested in Objects", function() {
+      expectResult('{ a [ 2 4 8 ] b -99 } .', { a: [ 2, 4, 8 ], b: -99 });
+    });
+
+    it("Objects can be nested in Objects", function() {
+      expectResult('{ a { c 48 } b -99 } .', { a: { c: 48 }, b: -99 });
+    });
+
+    it("Objects can be nested in Objects can be nested in Objects", function() {
+      expectResult('{ a { c 48 d { e 1000 } } b -99 } .',
+                   { a: { c: 48, d: { e: 1000 } }, b: -99 });
+    });
+
+    it("Objects can be nested in Arrays", function() {
+      expectResult('[ 2 4 { a -99 } 8 ] .', [ 2, 4, { a: -99 }, 8 ]);
+    });
+
   })
+
+  /**
+    words to test:
+      vocs - list vocabularies
+      vocabulary - create a new vocabulary
+      words - list the words in the current vocab
+      also - dup the top item on the search-order-stack
+  */
+  describe("Vocabularies", function() {
+
+    it("description", function() {
+
+    });
+
+  });
 
   // what sort of a word is interop?
   describe("JavaScript interoperability", function() {
@@ -676,8 +714,17 @@ describe("The Interpreter", function() {
         return "Hello from Root!";
       };
       this.rootAdd = function(num) {
-        self.rootCount += num;
+        // self.rootCount += num;
+        return self.rootCount + num;
       };
+      this.rootCountInc = function(num) {
+        if( num ) {
+          self.rootCount += num;
+        } else {
+          self.rootCount += 1;
+        }
+      }
+
       this.rootNames = [
         "Anne", "Bobby", "Catherine", "Dave", "Esther", "Fred", "Gill",
         "Henry", "Ida", "Joseph", "Kate", "Lyndon", "Marie", "Neil"
@@ -768,6 +815,29 @@ describe("The Interpreter", function() {
 
       describe("calling JS functions", function() {
 
+        it("can call js functions with no params, returns value", function() {
+          jsResult = forthInt.interpret('[] js-> rootHello .');
+          expect(jsResult.pop()).toBe('Hello from Root!');
+        });
+
+        it("can call js functions with params, returns value", function() {
+          jsResult = forthInt.interpret('[ 18 ] js-> rootAdd .');
+          expect(jsResult.pop()).toBe(41);
+        });
+
+        it("can call js functions with no params, no return value", function() {
+          jsResult = forthInt.interpret('[] js-> rootCountInc');
+          expect(jsResult.stackSize).toBe(0);
+          jsResult = forthInt.interpret('js@ rootCount .');
+          expect(jsResult.pop()).toEqual(24);
+        });
+
+        it("can call js functions with params, no return value", function() {
+          jsResult = forthInt.interpret('[ 10 ] js-> rootCountInc');
+          expect(jsResult.stackSize).toBe(0);
+          jsResult = forthInt.interpret('js@ rootCount .');
+          expect(jsResult.pop()).toEqual(33);
+        });
       });
 
     })
