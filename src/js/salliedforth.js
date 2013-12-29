@@ -604,7 +604,7 @@
         if( latest.executeAfterCreation ) {
           self.executeWords('exec');
         }
-        // TODO untested array nesting code!
+        // if nested then add this to the parent
         if( self.newCommands.current() && self.compilationMode() ) {
           self.newCommands.addToCurrent( self.popFromDataStack() );
         }
@@ -657,15 +657,7 @@
     }, true);
 
     this.addToDictionary(']', function() {
-      self.leaveCompilationMode(); // <-C
-      if( self.newCommands.current() ) {
-        self.newCommands.current().fn();
-        self.newCommands.pop();
-        // TODO untested array nesting code!
-        if( self.newCommands.current() && self.compilationMode() ) {
-          self.newCommands.addToCurrent( self.popFromDataStack() );
-        }
-      }
+      self.executeString('}');
     }, true);
 
     this.addToDictionary('array?', function() {

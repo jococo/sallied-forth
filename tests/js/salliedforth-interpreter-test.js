@@ -840,7 +840,7 @@ describe("The Interpreter", function() {
         });
       });
 
-    })
+    });
 
     describe("from JavaScript", function() {
 
