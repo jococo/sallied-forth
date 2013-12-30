@@ -17,6 +17,23 @@
       return obj1;
   }
 
+  /**
+    * Fetches the value from str specified in the pth array..
+    * pth = array of keys (Strings)
+    * str = JS Object hierarchy.
+    */
+  function pathRecur( pth, str ) {
+    if( pth.length > 0 ) {
+        var nxt = pth.shift(); // remove first item
+        var data = str[nxt];
+        if (data !== undefined ) {
+            return pathRecur( pth, data );
+        }
+        return undefined;
+    }
+    return str;
+  }
+
   var CustomCommand = function( name, prev, scope, errorFn ) {
     var self = this;
     this.name = name;
@@ -212,7 +229,7 @@
       if(!value) {
         var path = name.split(".");
         if(path.length > 1) {
-          value = eval('self.valueStore.'+name); // TODO replace this evil with a recursive function.
+          value = pathRecur( path, self.valueStore );
         }
       }
       return value;
