@@ -469,8 +469,8 @@ describe("The Interpreter", function() {
 
     describe( "! function", function() {
 
-      it("stores an integer value by name (name, value)", function() {
-        result = itp.interpret("word speed 87 ! .l");
+      it("stores an integer value by name (value, name)", function() {
+        result = itp.interpret("87 word speed ! .l");
         expect( result.pop() ).toBe(0); // stack length 0
         expect( itp.valueStore['speed'] ).toEqual(87); // only reach into valueStore for tests.
       });
@@ -480,7 +480,7 @@ describe("The Interpreter", function() {
     describe( "@ function", function() {
 
       it("retieves an integer value by name", function() {
-        itp.interpret("word pressure 10102 !");
+        itp.interpret("10102 word pressure !");
         result = itp.interpret("word pressure @ .");
         expect( result.pop() ).toBe(10102);
       });
@@ -781,59 +781,59 @@ describe("The Interpreter", function() {
 
       describe("getting JS properties", function() {
         it("can get integers", function() {
-          jsResult = forthInt.interpret('js@ rootCount .l .');
+          jsResult = forthInt.interpret('word rootCount @ .l .');
           expect(jsResult.data).toEqual([1,23]);
         });
         it("can get floats", function() {
-          jsResult = forthInt.interpret('js@ rootHeat .l .');
+          jsResult = forthInt.interpret('word rootHeat @ .l .');
           expect(jsResult.data).toEqual([1,88.97]);
         });
         it("can get strings", function() {
-          jsResult = forthInt.interpret('js@ rootName .');
+          jsResult = forthInt.interpret('word rootName @ .');
           expect(jsResult.pop()).toEqual('Rudolph');
         });
 
         it("can get arrays", function() {
-          jsResult = forthInt.interpret('js@ rootNames array? .');
+          jsResult = forthInt.interpret('word rootNames @ array? .');
           expect(jsResult.pop()).toEqual(true);
         });
 
         it("can get objects", function() {
-          jsResult = forthInt.interpret('js@ rootDomain object? .');
+          jsResult = forthInt.interpret('word rootDomain @ object? .');
           expect(jsResult.pop()).toEqual(true);
         });
 
         it("throws an error if property doesn't exist", function() {
-          expectThrow("js@ jabberwocky729");
+          expectThrow("word jabberwocky729 @");
         });
       });
 
       describe("setting JS properties", function() {
         it("can set integers", function() {
-          forthInt.interpret('90 js! rootCount');
-          jsResult = forthInt.interpret('js@ rootCount .l .');
+          forthInt.interpret('90 word rootCount !');
+          jsResult = forthInt.interpret('word rootCount @ .l .');
           expect(jsResult.data).toEqual([1,90]);
         });
         it("can set floats", function() {
-          forthInt.interpret('13.789 js! rootHeat');
-          jsResult = forthInt.interpret('js@ rootHeat .l .');
+          forthInt.interpret('13.789 word rootHeat !');
+          jsResult = forthInt.interpret('word rootHeat @ .l .');
           expect(jsResult.data).toEqual([1,13.789]);
         });
         it("can set strings", function() {
-          forthInt.interpret('word BorisJingle js! rootName');
-          jsResult = forthInt.interpret('js@ rootName .');
+          forthInt.interpret('word BorisJingle word rootName !');
+          jsResult = forthInt.interpret('word rootName @ .');
           expect(jsResult.pop()).toEqual('BorisJingle');
         });
 
         it("can set arrays", function() {
-          forthInt.interpret('[ 1 2 3 ] js! rootNames');
-          jsResult = forthInt.interpret('js@ rootNames array? .');
+          forthInt.interpret('[ 1 2 3 ] word rootNames !');
+          jsResult = forthInt.interpret('word rootNames @ array? .');
           expect(jsResult.pop()).toEqual(true);
         });
 
         it("can set objects", function() {
-          forthInt.interpret('{ b 4 } js! rootDomain');
-          jsResult = forthInt.interpret('js@ rootDomain object? .');
+          forthInt.interpret('{ b 4 } word rootDomain !');
+          jsResult = forthInt.interpret('word rootDomain @ object? .');
           expect(jsResult.pop()).toEqual(true);
         });
 
@@ -857,33 +857,33 @@ describe("The Interpreter", function() {
         it("can call js functions with no params, no return value", function() {
           jsResult = forthInt.interpret('[] js-> rootCountInc');
           expect(jsResult.stackSize).toBe(0);
-          jsResult = forthInt.interpret('js@ rootCount .');
+          jsResult = forthInt.interpret('word rootCount @ .');
           expect(jsResult.pop()).toEqual(24);
         });
 
         it("can call js functions with params, no return value", function() {
           jsResult = forthInt.interpret('[ 10 ] js-> rootCountInc');
           expect(jsResult.stackSize).toBe(0);
-          jsResult = forthInt.interpret('js@ rootCount .');
+          jsResult = forthInt.interpret('word rootCount @ .');
           expect(jsResult.pop()).toEqual(33);
         });
       });
 
       describe("Nested Properties", function() {
 
-        it("js@ can reach into js objects to retrieve values", function() {
-          jsResult = forthInt.interpret('js@ rootDomain.title .');
+        it("word can @ reach into js objects to retrieve values", function() {
+          jsResult = forthInt.interpret('word rootDomain.title @ .');
           expect(jsResult.pop()).toBe('awesome!');
-          jsResult = forthInt.interpret('js@ rootDomain.count .');
+          jsResult = forthInt.interpret('word rootDomain.count @ .');
           expect(jsResult.pop()).toBe(99);
         });
 
         it("js! can reach into js objects to set values", function() {
-          jsResult = forthInt.interpret('word awesomer!! js! rootDomain.title');
-          jsResult = forthInt.interpret('js@ rootDomain.title .');
+          jsResult = forthInt.interpret('word awesomer!! word rootDomain.title !');
+          jsResult = forthInt.interpret('word rootDomain.title @ .');
           expect(jsResult.pop()).toBe('awesomer!!');
-          jsResult = forthInt.interpret('100 js! rootDomain.count');
-          jsResult = forthInt.interpret('js@ rootDomain.count .');
+          jsResult = forthInt.interpret('100 word rootDomain.count !');
+          jsResult = forthInt.interpret('word rootDomain.count @ .');
           expect(jsResult.pop()).toBe(100);
         });
 
@@ -898,11 +898,11 @@ describe("The Interpreter", function() {
         xit("js-> console.log should not throw an error", function() {
           jsResult = function() {
             forthInt.interpret('[ ah! ] js-> console.log');
-          }
+          };
           expect(jsResult).not.toThrow();
         });
 
-      })
+      });
 
     });
 

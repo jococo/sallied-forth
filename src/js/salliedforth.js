@@ -551,8 +551,8 @@
 
     this.addToDictionary('!', function() {
       if( self.dataStack.length > 1 ) {
-        var value = self.popFromDataStack();
         var name = self.popFromDataStack();
+        var value = self.popFromDataStack();
         self.setValue(name, value);
       } else {
         self.error( '! needs a name and value' );
