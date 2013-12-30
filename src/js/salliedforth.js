@@ -208,7 +208,14 @@
     };
 
     this.getValue = function( name ) {
-      return this.valueStore[name];
+      var value = self.valueStore[name];
+      if(!value) {
+        var path = name.split(".");
+        if(path.length > 1) {
+          value = eval('self.valueStore.'+name); // TODO replace this evil with a recursive function.
+        }
+      }
+      return value;
     };
 
     this.findDefn = function( head, name ) {
@@ -308,7 +315,7 @@
 
     this.interpret = function(txt) {
       self.response = new ResponseData('OK.');
-      self.commands = txt.split(/ +/);
+      self.commands = txt.split(/\s+/);
 
       self.processCommands();
 
@@ -420,10 +427,19 @@
 
     this.addToDictionary('js->', function() {
       var args = self.popFromDataStack();
-      self.executeString('word @');
+      self.executeString('word dup @');
       // self.executeString('swap');
       var fn = self.popFromDataStack();
-      var result = fn.apply(self.valueStore, args);
+      var fnStr = self.popFromDataStack();
+      var localContext = self.valueStore;
+      switch( fnStr ) { // TODO this has got to go!
+        case "console.log":
+          localContext = window.console; // TODO WARNING!! TMI !!
+          break;
+        case "rsandom":
+          break;
+      }
+      var result = fn.apply(localContext, args);
       if( result !== undefined ) {
         self.pushToDataStack( result );
       }
@@ -558,6 +574,7 @@
       self.executeWords('drop');
     });
 
+    // comments
     this.addToDictionary('(', function() {
       // TODO revisit forth version
       // : test_for_close_backet word lit ) contains?
@@ -569,6 +586,18 @@
         // console.log('while loop ' + cmd);
       }
 
+    }, true);
+
+    // inline strings
+    this.addToDictionary('"', function() {
+      var txt = "";
+      var cmd;
+      while((cmd = self.commands.shift()) && (cmd.indexOf('"')==-1)) {
+        // console.log('while loop ' + cmd);
+        txt += cmd + ' ';
+      }
+      txt = txt + cmd.split('"')[0];
+      self.pushToDataStack( txt.trim() );
     }, true);
 
     // Defining Words

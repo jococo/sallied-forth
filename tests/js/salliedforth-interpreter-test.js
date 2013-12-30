@@ -34,7 +34,16 @@ describe("The Interpreter", function() {
     expectResult('9        7  *   .   ', 63);
   });
 
+  it("shouldn't get confused by carriage returns", function() {
+    expectResult('3\n2  + .', 5);
+    expectResult('9        7  *   .   ', 63);
+  });
+
   describe("Value Store", function() {
+
+    beforeEach(function() {
+      itp = new salliedforth.Interpreter({aaa: {bbb: {ccc: -1999}}});
+    })
 
     it("returns undefined for values that haven't been set.", function() {
       var name = "boff";
@@ -63,6 +72,15 @@ describe("The Interpreter", function() {
       expect(result).toEqual( {a: "help", c: 3.1} );
     });
 
+    it("can reach into nested objects", function() {
+      var name = "aaa.bbb.ccc";
+      result = itp.getValue( name );
+      expect(result).toEqual( -1999 );
+      result = itp.setValue( name, 2001 );
+      result = itp.getValue( name );
+      expect(result).toEqual( 2001 );
+    });
+
   });
 
   describe('WHILE', function() {
@@ -77,7 +95,7 @@ describe("The Interpreter", function() {
 
   });
 
-  describe("Comments", function() {
+  describe("Comments and Strings", function() {
 
     describe("( comment function", function() {
 
@@ -85,6 +103,17 @@ describe("The Interpreter", function() {
         expectResult('2 3 + ( adding the two numbers together ) .', 5);
       });
     });
+
+    describe('" function', function() {
+      it("creates an inline string", function() {
+        expectResult('" aint it so?" .', "aint it so?");
+      });
+      it("creates an inline string at compile time", function() {
+        itp.interpret(': gerty " a b c" . ;')
+        expectResult('gerty', "a b c");
+      });
+    });
+
   });
 
   describe('NOT function', function() {
@@ -730,8 +759,11 @@ describe("The Interpreter", function() {
         "Henry", "Ida", "Joseph", "Kate", "Lyndon", "Marie", "Neil"
       ];
       this.rootDomain = {
-        title: 'Domain',
-        count: 99
+        title: 'awesome!',
+        count: 99,
+        runIt: function( msg ) {
+          return "returning. " + msg;
+        }
       };
 
       // nested access (within arrays, objects, functions)
@@ -810,9 +842,6 @@ describe("The Interpreter", function() {
         });
       });
 
-
-
-
       describe("calling JS functions", function() {
 
         it("can call js functions with no params, returns value", function() {
@@ -840,13 +869,49 @@ describe("The Interpreter", function() {
         });
       });
 
+      describe("Nested Properties", function() {
+
+        it("js@ can reach into js objects to retrieve values", function() {
+          jsResult = forthInt.interpret('js@ rootDomain.title .');
+          expect(jsResult.pop()).toBe('awesome!');
+          jsResult = forthInt.interpret('js@ rootDomain.count .');
+          expect(jsResult.pop()).toBe(99);
+        });
+
+        it("js! can reach into js objects to set values", function() {
+          jsResult = forthInt.interpret('word awesomer!! js! rootDomain.title');
+          jsResult = forthInt.interpret('js@ rootDomain.title .');
+          expect(jsResult.pop()).toBe('awesomer!!');
+          jsResult = forthInt.interpret('100 js! rootDomain.count');
+          jsResult = forthInt.interpret('js@ rootDomain.count .');
+          expect(jsResult.pop()).toBe(100);
+        });
+
+        it("js-> can reach into js objects to run functions", function() {
+          jsResult = forthInt.interpret('[ things ] js-> rootDomain.runIt .');
+          expect(jsResult.pop()).toBe('returning. things');
+        });
+
+      });
+
+      describe("Browser interop", function() {
+        xit("js-> console.log should not throw an error", function() {
+          jsResult = function() {
+            forthInt.interpret('[ ah! ] js-> console.log');
+          }
+          expect(jsResult).not.toThrow();
+        });
+
+      })
+
     });
+
 
     describe("from JavaScript", function() {
 
 
 
-    })
+    });
 
   });
 
