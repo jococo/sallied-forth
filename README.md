@@ -1,6 +1,6 @@
 ## !Experimental Change! Seamless JS
 
-This version is playing with the idea of having no dictinction for the user between forth words and JavaScript properties and commands.
+This version is playing with the idea of having no distinction for the user between forth words and JavaScript properties and commands.
 
 for instance:
 
