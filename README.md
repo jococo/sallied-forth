@@ -88,17 +88,19 @@ Most features have been developed with accompanying tests and they will be enhan
 - [x][ ][ ] loops or recursion or both
   *- [ ] is recursion possible?
 - [ ] decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
-- [ ] javascript interop
-  - [x] pass JS context into interpreter
-  - [x] getting JS property values
-  - [x] setting JS property values
-  - [ ] execute JS function (no params)
-  - [ ] execute JS function (w/ params)
 - [ ] run test auto with Grunt
 - [ ] REPL input needs history
 
 ## DONE
 
+- [x] javascript interop [1/1/2014]
+  - [x] pass JS context into interpreter
+  - [x] getting JS property values
+  - [x] setting JS property values
+  - [x] execute JS function (no params)
+  - [x] execute JS function (w/ params)
+  - [x] execute JS function (w/ return)
+  - [x] execute JS console.log function (needs console context)
 - [x] collections [27/12/2013]
   js arrays, objects (Is this a good time to look at mori?)
 - BREAKING CHANGES!! start [all 27/12/2013]
