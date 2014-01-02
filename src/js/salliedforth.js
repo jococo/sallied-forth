@@ -17,6 +17,27 @@
       return obj1;
   }
 
+  /**
+    * Fetches the value from str specified in the pth array..
+    * pth = array of keys (Strings)
+    * str = JS Object hierarchy.
+    */
+  function pathRecur( pth, str ) {
+    if( pth.length > 0 ) {
+        var nxt = pth.shift(); // remove first item
+        var data = str[nxt];
+        if (data !== undefined ) {
+            return pathRecur( pth, data );
+        }
+        return undefined;
+    }
+    return str;
+  }
+
+  function isObject(obj) {
+    return obj === Object(obj);
+  }
+
   var CustomCommand = function( name, prev, scope, errorFn ) {
     var self = this;
     this.name = name;
@@ -212,7 +233,7 @@
       if(!value) {
         var path = name.split(".");
         if(path.length > 1) {
-          value = eval('self.valueStore.'+name); // TODO replace this evil with a recursive function.
+          value = pathRecur( path, self.valueStore );
         }
       }
       return value;
@@ -230,10 +251,28 @@
       }
     };
 
-    this.findDefinition = function(name) {
+
+    this.findJSDefinition = function(name) {
+      var defn;
+      defn = self.getValue(name);
+      if( defn ) { // && (toString.call(defn) == '[object Function]')) {
+        var ret = new CustomCommand(name, undefined, self.valueStore);
+        ret.add( function() {
+          var result = defn();
+          if( result !== undefined ) {
+            return result;
+          }
+        });
+        return ret; // or definition
+      }
+    };
+
+    this.findWordDefinition = function(name) {
       if(self.dictionaryHead) {
         var defn = self.findDefn(self.dictionaryHead, name);
-        return defn;
+        if( defn ) {
+          return defn;
+        }
       }
       return undefined;
     };
@@ -258,12 +297,15 @@
       var args = Array.prototype.slice.call(arguments);
       try {
         var allFunctions = args.map(function(name) {
-          var defn = self.findDefinition( name );
+          var defn = self.findWordDefinition( name );
           if( defn ) {
             return defn.fn;
-          } else {
-            throw('Function ' + name + ' not found!');
           }
+          defn = self.findJSDefinition(name);
+          if( defn ) {
+            return defn.fn;
+          }
+          throw('Function ' + name + ' not found!');
         });
         self.executeFunctions.apply( self, allFunctions );
       } catch(err) {
@@ -287,7 +329,7 @@
 
             if( self.compilationMode() ) {
               // in compilationMode
-              var commandDefn = self.findDefinition(nextCommandName);
+              var commandDefn = self.findWordDefinition(nextCommandName);
               if( commandDefn ) {
                 if( commandDefn.immediate ) {
                   // if it's an immediate command run it now
@@ -315,7 +357,9 @@
 
     this.interpret = function(txt) {
       self.response = new ResponseData('OK.');
-      self.commands = txt.split(/\s+/);
+      self.commands = txt.split(/\s+/).filter(function(str) {
+        return str.trim() !== '';
+      });
 
       self.processCommands();
 
@@ -376,6 +420,10 @@
       self.dataStack.length = 0;
     });
 
+    this.addToDictionary('.log', function() {
+      console.log( self.dataStack );
+    });
+
     this.addToDictionary('dup', function() {
       var val = self.popFromDataStack();
       if( val ) {
@@ -416,33 +464,151 @@
 
     // JS Interop TODO does this need to go later, e.g. if we use the Maths functions?
 
-    this.addToDictionary('js@', function() {
-      self.executeString('word @');
-    });
+    // TODO commenting these out for now.
+    // this.addToDictionary('js@', function() {
+    //   self.executeString('word @');
+    // });
 
-    this.addToDictionary('js!', function() {
-      self.executeString('word');
-      self.executeString('swap !');
-    });
+    // this.addToDictionary('js!', function() {
+    //   self.executeString('word');
+    //   self.executeString('swap !');
+    // });
 
-    this.addToDictionary('js->', function() {
-      var args = self.popFromDataStack();
-      self.executeString('word dup @');
-      // self.executeString('swap');
-      var fn = self.popFromDataStack();
-      var fnStr = self.popFromDataStack();
-      var localContext = self.valueStore;
-      switch( fnStr ) { // TODO this has got to go!
-        case "console.log":
-          localContext = window.console; // TODO WARNING!! TMI !!
-          break;
-        case "rsandom":
-          break;
+    // this.addToDictionary('js->', function() {
+    //   var args = self.popFromDataStack();
+    //   self.executeString('word dup @');
+    //   // self.executeString('swap');
+    //   var fn = self.popFromDataStack();
+    //   var fnStr = self.popFromDataStack();
+    //   var localContext = self.valueStore;
+    //   switch( fnStr ) { // TODO this has got to go!
+    //     case "console.log":
+    //       localContext = window.console; // TODO WARNING!! TMI !!
+    //       break;
+    //     case "rsandom":
+    //       break;
+    //   }
+    //   var result = fn.apply(localContext, args);
+    //   if( result !== undefined ) {
+    //     self.pushToDataStack( result );
+    //   }
+    // });
+
+    this.getJSContextFor = function( path ) {
+      var context = self.valueStore;
+      if( path.substr(0, 8) === 'console.' ) {
+        context = window.console; // TODO WARNING!! TMI !!
+      } else if ( path.substr(0, 9) == 'document.') {
+        context = document;
       }
-      var result = fn.apply(localContext, args);
-      if( result !== undefined ) {
+      return context;
+    };
+
+    this.addToDictionary('get', function() {
+      var obj = self.popFromDataStack();
+      if( isObject(obj) ) {
+        self.executeWords('word');
+        var key = self.popFromDataStack();
+        self.pushToDataStack(obj);
+        self.pushToDataStack( pathRecur( key.split('.'), obj ) );
+      }
+    });
+
+    //
+    this.addToDictionary('set', function() {
+      var value = self.popFromDataStack();
+      var obj = self.popFromDataStack();
+      if( isObject(obj) ) {
+        self.executeWords('word');
+        var key = self.popFromDataStack();
+        var path = key.split('.');
+        key = path.pop();
+        var parent = pathRecur( path, obj );
+        parent[key] = value;
+        self.pushToDataStack( obj );
+      }
+    });
+
+    this.addToDictionary('pop', function() {
+      var arr = self.popFromDataStack();
+      if(Array.isArray(arr)) {
+        self.pushToDataStack( arr );
+        self.pushToDataStack( arr.pop() );
+      } else {
+        self.error('Not an array for pop! ' + arr);
+      }
+    });
+
+    this.addToDictionary('push', function() {
+      var value = self.popFromDataStack();
+      var arr = self.popFromDataStack();
+      if(Array.isArray(arr)) {
+        arr.push( value );
+        self.pushToDataStack( arr );
+      } else {
+        self.error('Not an array for pop! ' + arr);
+      }
+    });
+
+    // TODO js & js- need refactoring
+    // also look into trad forth CREATE & DOES>
+    this.addToDictionary('js', function() {
+      var fn, fnPath, localContext;
+      if( self.compilationMode() ) {
+        self.executeString('word dup @'); // get the js fn name, find it from the js context
+        fn = self.popFromDataStack();
+        fnPath = self.popFromDataStack();
+        localContext = self.getJSContextFor( fnPath );
+        self.newCommands.addToCurrent( (function( aFn, aPath, aContext ) {
+          return function() {
+            var aArgs = self.popFromDataStack();
+            aFn.apply( aContext, aArgs );
+          };
+        } )( fn, fnPath, localContext ) );
+      } else {
+        var args = self.popFromDataStack(); // get the array of words
+        self.executeString('word dup @'); // get the js fn name, find it from the js context
+        fn = self.popFromDataStack();
+        fnPath = self.popFromDataStack();
+        localContext = self.getJSContextFor( fnPath );
+        fn.apply(localContext, args);
+      }
+    }, true);
+
+    // same as 'js' but expects a return value or returns undefined
+    this.addToDictionary('js-', function() {
+      var fn, fnPath, localContext, result;
+      if( self.compilationMode() ) {
+        // var args = self.popFromDataStack(); // get the array of words
+        self.executeString('word dup @'); // get the js fn name, find it from the js context
+        fn = self.popFromDataStack();
+        fnPath = self.popFromDataStack();
+        localContext = self.getJSContextFor( fnPath );
+        self.newCommands.addToCurrent((function(aFn, aPath, aContext){
+          return function() {
+            var aArgs = self.popFromDataStack();
+            var aResult = fn.apply(aContext, aArgs);
+            self.pushToDataStack( aResult );
+          };
+        })( fn, fnPath, localContext ));
+      } else {
+        var args = self.popFromDataStack(); // get the array of words
+        self.executeString('word dup @'); // get the js fn name, find it from the js context
+        fn = self.popFromDataStack();
+        fnPath = self.popFromDataStack();
+        localContext = self.getJSContextFor( fnPath );
+        result = fn.apply(localContext, args);
         self.pushToDataStack( result );
       }
+    }, true);
+
+    this.addToDictionary('arity', function() {
+      var len = self.popFromDataStack();
+      var result = [];
+      while( len-- ) {
+        result.unshift( self.popFromDataStack() );
+      }
+      self.pushToDataStack( result );
     });
 
     // Maths words
@@ -513,10 +679,16 @@
     // find the definition
     this.addToDictionary('find', function() {
       var name = self.popFromDataStack();
-      var defn = self.findDefinition( name );
+      var defn = self.findWordDefinition( name );
       if( defn ) {
         self.pushToDataStack( defn );
         return;
+      } else {
+        defn = self.findJSDefinition( name );
+        if( defn ) {
+          self.pushToDataStack( defn );
+          return;
+        }
       }
       self.error("Cannot find word '" + name + "'");
     });
@@ -534,8 +706,8 @@
 
     this.addToDictionary('!', function() {
       if( self.dataStack.length > 1 ) {
-        var value = self.popFromDataStack();
         var name = self.popFromDataStack();
+        var value = self.popFromDataStack();
         self.setValue(name, value);
       } else {
         self.error( '! needs a name and value' );
@@ -598,6 +770,13 @@
       }
       txt = txt + cmd.split('"')[0];
       self.pushToDataStack( txt.trim() );
+      if( self.compilationMode() ) {
+        self.newCommands.addToCurrent( (function(newTxt) {
+          return function() {
+            self.pushToDataStack(newTxt);
+          };
+        })(self.popFromDataStack()));
+      }
     }, true);
 
     // Defining Words
@@ -664,7 +843,7 @@
       var cmd = self.popFromDataStack();
       if( cmd ) {
         if( cmd && cmd.name ) {
-          var found = self.findDefinition( cmd.name );
+          var found = self.findWordDefinition( cmd.name );
           if( found ) {
             self.log( cmd.name + ' is not unique.' );
           }
@@ -698,6 +877,19 @@
       self.pushToDataStack([]);
     });
 
+    this.addToDictionary('{}', function() {
+      self.pushToDataStack({});
+    });
+
+    // call a function given the JS PATH
+    this.interpret(': call word @ exec ;');
+
+    this.interpret(': arity1 1 arity ;');
+    this.interpret(': arity2 2 arity ;');
+    this.interpret(': arity3 3 arity ;');
+    this.interpret(': arity4 4 arity ;');
+    // any more? define your own
+
     // Defining Objects
 
     // only need the opening word as } is defined for functions fn{
@@ -709,7 +901,7 @@
 
     this.addToDictionary('object?', function() {
       var obj = self.popFromDataStack();
-      self.pushToDataStack( obj === Object(obj) );
+      self.pushToDataStack( isObject( obj ) );
     });
 
     this.addToDictionary('concat', function() {

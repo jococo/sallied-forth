@@ -30,7 +30,13 @@
 
       var log = function( txt ) {
         var oldText = logText.value;
-        logText.value = oldText + '\n' + JSON.stringify( txt );
+        var txtCvt;
+        try {
+          txtCvt = JSON.stringify( txt );
+        } catch(err) {
+          txtCvt = txt.toString();
+        }
+        logText.value = oldText + '\n' + txtCvt;
         logText.scrollTop = logText.scrollHeight;
       }
 
@@ -56,5 +62,10 @@
     <script src="js/lib/jasmine/jasmine-html.js"></script>
     <script src="js/lib/jasmine/boot.js"></script>
     <script src="js/salliedforth-interpreter-test.js"></script>
+    <script src="spec/stack-manipulation-spec.js"></script>
+    <script src="spec/maths-spec.js"></script>
+    <script src="spec/javascript-interop-spec.js"></script>
+    <script src="spec/browser-spec.js"></script>
+    <script src="spec/vocabularies-spec.js"></script>
   </body>
 </html>
