@@ -29,6 +29,10 @@ describe("The Interpreter", function() {
     expect(itp.versionString).toBe('0.0.1');
   });
 
+  it("shouldn't get confused by spaces at start", function() {
+    expectResult(' 9 9 * .', 81);
+  });
+
   it("shouldn't get confused by multiple spaces", function() {
     expectResult('3 2  + .', 5);
     expectResult('9        7  *   .   ', 63);
@@ -108,9 +112,11 @@ describe("The Interpreter", function() {
       it("creates an inline string", function() {
         expectResult('" aint it so?" .', "aint it so?");
       });
+
       it("creates an inline string at compile time", function() {
-        itp.interpret(': gerty " a b c" . ;')
-        expectResult('gerty', "a b c");
+        itp.interpret(': gerty " a b c" . ;');
+        expectResult('.l', 0);
+        expectResult('gerty', 'a b c');
       });
     });
 
@@ -197,204 +203,6 @@ describe("The Interpreter", function() {
 
   });
 
-  describe("Stack Manipulation", function() {
-
-    // DUP function
-    describe("DUP function", function() {
-
-      it("duplicates the top stack item.", function() {
-        result = itp.interpret("3 dup .");
-        expect(result.pop()).toBe(3); // size of stack, top item
-      });
-
-      it("throws an error if stack is empty", function() {
-        expectThrow('dup');
-      });
-
-    });
-
-    // DROP function
-    describe("DROP function", function() {
-
-      it("drops the top stack item.", function() {
-        result = itp.interpret("7 8 drop .l .");
-        expect(result.pop()).toBe(7); // top item
-        expect(result.stackSize).toBe(0);
-      });
-
-      it("throws an error if stack is empty", function() {
-        expectThrow('drop');
-      });
-
-    });
-
-    // SWAP function
-    describe("SWAP function", function() {
-
-      it("swaps the top stack item with the one beneath.", function() {
-        result = itp.interpret("4 9 swap .");
-        expect(result.pop()).toBe(4);
-      });
-
-      it("throws an error if stack is empty", function() {
-        expectThrow('swap');
-      });
-
-    });
-
-    // OVER function
-    describe("OVER function", function() {
-
-      it("duplicates the second stack item pushing it on the top.", function() {
-        result = itp.interpret("6 7 over .");
-        expect(result.pop()).toBe(6);
-      });
-
-      it("throws an error if stack is empty", function() {
-        expectThrow('over');
-      });
-
-    });
-
-    // ROLL function
-    describe("ROLL function", function() {
-
-      it("take the third item on the stack and put's it up top", function() {
-        expectResult('1 2 3 2 roll .s', [2,3,1]);
-      });
-
-      it("take the second item on the stack and put's it up top", function() {
-        expectResult('1 2 3 1 roll .s', [1,3,2]);
-      });
-
-      it("stays the same", function() {
-        expectResult('1 2 3 0 roll .s', [1,2,3]);
-      });
-
-      it("throws an error if stack is empty", function() {
-        expectThrow('roll');
-      });
-
-    })
-
-    // ROT function
-    describe("ROT function", function() {
-
-      it("take the third item on the stack and put's it up top", function() {
-        expectResult('1 2 3 rot .s', [2,3,1]);
-      });
-
-      it("throws an error if <3 items on the stack", function() {
-        expectThrow('1 2 rot');
-      });
-
-    })
-
-  })
-
-
-  describe("Maths functions", function() {
-
-    describe("+ (PLUS) function", function() {
-
-      it("adds the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("7 4 + .");
-        expect(result.pop()).toBe(11);
-      });
-
-      it("throws error on less than two numbers.", function() {
-        expectThrow('+');
-        expectThrow('1 +');
-      });
-    });
-
-    describe("* (MULT) function", function() {
-
-      it("multiplies the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("6 5 * .");
-        expect(result.pop()).toBe(30);
-      });
-
-      it("throws error on less than two numbers.", function() {
-        expectThrow('*');
-        expectThrow('1 *');
-      });
-    })
-
-    describe("- (MINUS) function", function() {
-
-      it("subtracts the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("19 6 - .");
-        expect(result.pop()).toBe(13);
-      });
-
-      it("throws error on less than two numbers.", function() {
-        expectThrow('-');
-        expectThrow('1 -');
-      });
-
-    })
-
-    describe("/ (DIV) function", function() {
-
-      it("divides the top two stack items pushing the result on the stack.", function() {
-        result = itp.interpret("35 5 / .");
-        expect(result.pop()).toBe(7);
-      });
-
-      it("throws error on less than two numbers.", function() {
-        expectThrow('/');
-        expectThrow('1 /');
-      });
-
-    })
-
-    describe("% (MOD) function", function() {
-
-      it("divides the top two stack items pushing the remainder on the stack.", function() {
-        result = itp.interpret("83 6 % .");
-        expect(result.pop()).toBe(5);
-      });
-
-      it("throws error on less than two numbers.", function() {
-        expectThrow('%');
-        expectThrow('1 %');
-      });
-
-    });
-
-    describe("= (EQUALS) function", function() {
-      it("equals uses JavaScript ===", function() {
-        // yes
-        expectResult('1 1 = .', true);
-        expectResult('1.0 1 = .', true);
-        expectResult('0 1.0 + 1 = .', true);
-        expectResult('word bob word bob = .', true);
-        // no
-        expectResult('19 100 = .', false);
-        expectResult('word bob word Bob = .', false);
-        expectResult('word true true = .', false);
-      });
-    });
-
-    describe('INC function', function() {
-
-      it("increments the top value on the stack", function() {
-        expectResult('4 inc .', 5);
-      });
-
-    });
-
-    describe('DEC function', function() {
-
-      it("decrements the top value on the stack", function() {
-        expectResult('4 dec .', 3);
-      });
-
-    });
-
-  });
-
   describe("Command functions", function() {
     describe("WORD", function() {
 
@@ -465,7 +273,7 @@ describe("The Interpreter", function() {
         expect(result.pop()).not.toBe(null);
       });
 
-    })
+    });
 
     describe( "! function", function() {
 
@@ -519,6 +327,12 @@ describe("The Interpreter", function() {
         expect(itp.compilationMode()).toBe(true);
         itp.interpret('}');
         expect(itp.compilationMode()).toBeFalsy();
+      });
+
+      it("fn{ } creates a new function on the stack", function() {
+        itp.interpret('fn{ dup * }');
+        result = itp.interpret('12 swap exec .');
+        expect(result.pop()).toBe(144);
       });
 
     });
@@ -639,6 +453,16 @@ describe("The Interpreter", function() {
 
     });
 
+    describe ("JS in anon function", function() {
+      it("can be called", function() {
+        result = itp.interpret( 'fn{ [ hey! ] . } exec' );
+        expect(result.pop()).toEqual(['hey!']);
+      });
+
+    });
+
+
+
   });
 
   describe("Arrays", function() {
@@ -662,6 +486,16 @@ describe("The Interpreter", function() {
       expectResult('[ ] array? .', true);
     });
 
+    it("can contain single string", function() {
+      result = itp.interpret('[ Halp ] .');
+      expect(result.pop()).toEqual(['Halp']);
+    });
+
+    it("can contain functions", function() {
+      result = itp.interpret('[] fn{ dup * } push');
+      result = itp.interpret('pop 7.5 swap exec .');
+      expect(result.pop()).toBe(56.25);
+    });
 
   });
 
@@ -711,208 +545,42 @@ describe("The Interpreter", function() {
       expectResult('[ 2 4 { a -99 } 8 ] .', [ 2, 4, { a: -99 }, 8 ]);
     });
 
-  })
+    it("Array items are retrieved with get", function() {
+      result = itp.interpret("[ 1 2 9 7 ] get 2 .");
+      expect(result.pop()).toBe(9);
+    });
 
-  /**
-    words to test:
-      vocs - list vocabularies
-      vocabulary - create a new vocabulary
-      words - list the words in the current vocab
-      also - dup the top item on the search-order-stack
-  */
-  describe("Vocabularies", function() {
+    it("Array items are written with set", function() {
+      itp.interpret("[ a b c ] -99 set 1");
+      result = itp.interpret("get 1 .");
+      expect(result.pop()).toBe(-99);
+    });
 
-    it("description", function() {
+    it("Array items can be added with push", function() {
+      result = itp.interpret("[ a b c ] 89 push .");
+      expect(result.pop()).toEqual([ 'a', 'b', 'c', 89 ]);
+    });
 
+    it("Last Array item can be fetched with pop", function() {
+      result = itp.interpret("[ 1 2 9 17 ] pop .");
+      expect(result.pop()).toBe(17);
+    });
+
+    it("Object properties are retrieved with get", function() {
+      result = itp.interpret("{ a 97 } get a .");
+      expect(result.pop()).toBe(97);
+      result = itp.interpret("{ a 97 b { c 28 } } get b.c .");
+      expect(result.pop()).toBe(28);
+    });
+
+    it("Object properties are written with set", function() {
+      itp.interpret("{ a 97 } 101 set b");
+      result = itp.interpret("get b .");
+      expect(result.pop()).toBe(101);
+      itp.interpret("{ a 97 b { c 99 } } 1999 set b.c");
+      result = itp.interpret("get b.c .");
+      expect(result.pop()).toBe(1999);
     });
 
   });
-
-  // what sort of a word is interop?
-  describe("JavaScript interoperability", function() {
-
-    // proxy class for JS communication
-    var JSWorld = function() {
-      var self = this;
-
-      // access at the root level
-      this.rootCount = 23;
-      this.rootHeat = 88.97;
-      this.rootName = 'Rudolph';
-      this.rootHello = function() {
-        return "Hello from Root!";
-      };
-      this.rootAdd = function(num) {
-        // self.rootCount += num;
-        return self.rootCount + num;
-      };
-      this.rootCountInc = function(num) {
-        if( num ) {
-          self.rootCount += num;
-        } else {
-          self.rootCount += 1;
-        }
-      }
-
-      this.rootNames = [
-        "Anne", "Bobby", "Catherine", "Dave", "Esther", "Fred", "Gill",
-        "Henry", "Ida", "Joseph", "Kate", "Lyndon", "Marie", "Neil"
-      ];
-      this.rootDomain = {
-        title: 'awesome!',
-        count: 99,
-        runIt: function( msg ) {
-          return "returning. " + msg;
-        }
-      };
-
-      // nested access (within arrays, objects, functions)
-    };
-
-    // create local variables for this section to test JS interoperability.
-    var forthInt, jsWorld, jsResult;
-
-    beforeEach(function() {
-      jsWorld = new JSWorld();
-      forthInt = new salliedforth.Interpreter( jsWorld );
-    })
-
-    describe("from Sallied-Forth", function() {
-
-      describe("getting JS properties", function() {
-        it("can get integers", function() {
-          jsResult = forthInt.interpret('word rootCount @ .l .');
-          expect(jsResult.data).toEqual([1,23]);
-        });
-        it("can get floats", function() {
-          jsResult = forthInt.interpret('word rootHeat @ .l .');
-          expect(jsResult.data).toEqual([1,88.97]);
-        });
-        it("can get strings", function() {
-          jsResult = forthInt.interpret('word rootName @ .');
-          expect(jsResult.pop()).toEqual('Rudolph');
-        });
-
-        it("can get arrays", function() {
-          jsResult = forthInt.interpret('word rootNames @ array? .');
-          expect(jsResult.pop()).toEqual(true);
-        });
-
-        it("can get objects", function() {
-          jsResult = forthInt.interpret('word rootDomain @ object? .');
-          expect(jsResult.pop()).toEqual(true);
-        });
-
-        it("throws an error if property doesn't exist", function() {
-          expectThrow("word jabberwocky729 @");
-        });
-      });
-
-      describe("setting JS properties", function() {
-        it("can set integers", function() {
-          forthInt.interpret('90 word rootCount !');
-          jsResult = forthInt.interpret('word rootCount @ .l .');
-          expect(jsResult.data).toEqual([1,90]);
-        });
-        it("can set floats", function() {
-          forthInt.interpret('13.789 word rootHeat !');
-          jsResult = forthInt.interpret('word rootHeat @ .l .');
-          expect(jsResult.data).toEqual([1,13.789]);
-        });
-        it("can set strings", function() {
-          forthInt.interpret('word BorisJingle word rootName !');
-          jsResult = forthInt.interpret('word rootName @ .');
-          expect(jsResult.pop()).toEqual('BorisJingle');
-        });
-
-        it("can set arrays", function() {
-          forthInt.interpret('[ 1 2 3 ] word rootNames !');
-          jsResult = forthInt.interpret('word rootNames @ array? .');
-          expect(jsResult.pop()).toEqual(true);
-        });
-
-        it("can set objects", function() {
-          forthInt.interpret('{ b 4 } word rootDomain !');
-          jsResult = forthInt.interpret('word rootDomain @ object? .');
-          expect(jsResult.pop()).toEqual(true);
-        });
-
-        it("throws an error if propertyName missing", function() {
-          expectThrow("99 js!");
-        });
-      });
-
-      describe("calling JS functions", function() {
-
-        it("can call js functions with no params, returns value", function() {
-          jsResult = forthInt.interpret('[] js-> rootHello .');
-          expect(jsResult.pop()).toBe('Hello from Root!');
-        });
-
-        it("can call js functions with params, returns value", function() {
-          jsResult = forthInt.interpret('[ 18 ] js-> rootAdd .');
-          expect(jsResult.pop()).toBe(41);
-        });
-
-        it("can call js functions with no params, no return value", function() {
-          jsResult = forthInt.interpret('[] js-> rootCountInc');
-          expect(jsResult.stackSize).toBe(0);
-          jsResult = forthInt.interpret('word rootCount @ .');
-          expect(jsResult.pop()).toEqual(24);
-        });
-
-        it("can call js functions with params, no return value", function() {
-          jsResult = forthInt.interpret('[ 10 ] js-> rootCountInc');
-          expect(jsResult.stackSize).toBe(0);
-          jsResult = forthInt.interpret('word rootCount @ .');
-          expect(jsResult.pop()).toEqual(33);
-        });
-      });
-
-      describe("Nested Properties", function() {
-
-        it("word can @ reach into js objects to retrieve values", function() {
-          jsResult = forthInt.interpret('word rootDomain.title @ .');
-          expect(jsResult.pop()).toBe('awesome!');
-          jsResult = forthInt.interpret('word rootDomain.count @ .');
-          expect(jsResult.pop()).toBe(99);
-        });
-
-        it("js! can reach into js objects to set values", function() {
-          jsResult = forthInt.interpret('word awesomer!! word rootDomain.title !');
-          jsResult = forthInt.interpret('word rootDomain.title @ .');
-          expect(jsResult.pop()).toBe('awesomer!!');
-          jsResult = forthInt.interpret('100 word rootDomain.count !');
-          jsResult = forthInt.interpret('word rootDomain.count @ .');
-          expect(jsResult.pop()).toBe(100);
-        });
-
-        it("js-> can reach into js objects to run functions", function() {
-          jsResult = forthInt.interpret('[ things ] js-> rootDomain.runIt .');
-          expect(jsResult.pop()).toBe('returning. things');
-        });
-
-      });
-
-      describe("Browser interop", function() {
-        xit("js-> console.log should not throw an error", function() {
-          jsResult = function() {
-            forthInt.interpret('[ ah! ] js-> console.log');
-          };
-          expect(jsResult).not.toThrow();
-        });
-
-      });
-
-    });
-
-
-    describe("from JavaScript", function() {
-
-
-
-    });
-
-  });
-
 });

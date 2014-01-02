@@ -25,8 +25,18 @@
     <h3>Interact with the example</h3>
     <textarea id="logBox" class="codebox" cols="80" rows="10" readonly>OK.</textarea>
     <br />
+    <ul class="suggestion-list">
+      <li><a data-forth="[ hello ] js- document.getElementById">[ hello ] js- document.getElementById</a></li>
+      <li><a data-forth="{ title store } word storage !">{ title store } word storage !</a></li>
+      <li><a data-forth="word storage @">word storage @</a></li>
+      <li><a data-forth=".s">.s</a></li>
+    </ul>
     <textarea id="inputBox" class="codebox" cols="80" rows="14" >
-[ hey! ] js-> alert</textarea>
+[ hello ] js- document.getElementById
+! helloBtn
+fn{ hey! alert }
+word click
+2 arity js helloBtn.addEventListener</textarea>
 
     <button class="runButton" id="run1">Run</button>
     <div>
@@ -43,16 +53,39 @@
 
       var log = function( txt ) {
         var oldText = logText.value;
-        logText.value = oldText + '\n' + JSON.stringify( txt );
+        var txtCvt;
+        try {
+          txtCvt = JSON.stringify( txt );
+        } catch(err) {
+          txtCvt = txt.toString();
+        }
+        logText.value = oldText + '\n' + txtCvt;
+        logText.scrollTop = logText.scrollHeight;
+      };
+
+      var errorLog = function( txt ) {
+        var oldText = logText.value;
+        logText.value = oldText + '\n' +  txt;
         logText.scrollTop = logText.scrollHeight;
       };
 
       interpreter.setLogFunction( log );
-      interpreter.setErrorFunction( log );
+      // interpreter.setErrorFunction( errorLog );
 
       runBtn.onclick = function() {
         interpreter.interpret( inputter.value );
       };
+
+      var suggestionsNL = document.querySelectorAll('[data-forth');
+      var suggestions = Array.prototype.slice.call(suggestionsNL);
+      suggestions.forEach( function( item ) {
+        console.log('f ',item.attributes['data-forth']);
+        item.onclick = function( event ) {
+          var target = event.target;
+          var text = target.attributes['data-forth'].value;
+          inputter.value += ' ' + text;
+        }
+      });
 
     </script>
   </body>
