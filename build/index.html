@@ -5,13 +5,11 @@
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
-    <div class="menubar">
-      <ul>
-        <li><a href="/build/">Main REPL</a></li>
-        <li><a href="/tests/">Tests &amp; REPL</a></li>
-        <li><a href="/examples/">Examples</a></li>
-      </ul>
-    </div>
+    <ul class="menubar">
+      <li><a href="/build/">Main REPL</a></li>
+      <li><a href="/tests/">Tests &amp; REPL</a></li>
+      <li><a href="/examples/">Examples</a></li>
+    </ul>
     <h1>SalliedForth</h1>
     <textarea id="logBox" class="codebox" cols="80" rows="10" readonly>OK.</textarea>
     <br />
@@ -48,9 +46,7 @@
           this.value = '';
           return false;
         }
-      };
-
-      inputter.focus();
+      }
     </script>
   </body>
 </html>

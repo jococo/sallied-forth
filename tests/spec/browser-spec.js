@@ -1,8 +1,12 @@
 
 describe("Browser interop", function() {
 
-  var browserInt = new salliedforth.Interpreter( window );
-  var bResult;
+  var browserInt, bResult;
+
+  beforeEach(function() {
+    browserInt = new salliedforth.Interpreter( window );
+    bResult = null;
+  });
 
   it("document.getElementById should work", function() {
     var div = document.createElement('div');
@@ -50,5 +54,13 @@ describe("from JavaScript", function() {
   // test add external libs maybe?
 
   // test event listeners, promises?
+
+  var browserInt = new salliedforth.Interpreter( window );
+  var bResult;
+
+  it('can execute a simple stack push an pop', function() {
+    bResult = browserInt.interpret('1 .');
+    expect(bResult.stackSize).toBe(0);
+  });
 
 });

@@ -25,8 +25,8 @@ describe("The Interpreter", function() {
 
   // Utility Functions
 
-  it("is at version 0.0.1", function() {
-    expect(itp.versionString).toBe('0.0.1');
+  it("is at version 0.0.2", function() {
+    expect(itp.versionString).toBe('0.0.2');
   });
 
   it("shouldn't get confused by spaces at start", function() {
@@ -47,7 +47,7 @@ describe("The Interpreter", function() {
 
     beforeEach(function() {
       itp = new salliedforth.Interpreter({aaa: {bbb: {ccc: -1999}}});
-    })
+    });
 
     it("returns undefined for values that haven't been set.", function() {
       var name = "boff";
@@ -95,6 +95,10 @@ describe("The Interpreter", function() {
 
     it("continues until false is on top of stack", function() {
       expectResult("fn{ false } true while .l", 0);
+    });
+
+    xit('can reach the stack', function() {
+      expectResult("5 fn{ dec dup 0 > } true while .l", 99);
     });
 
   });
@@ -181,7 +185,7 @@ describe("The Interpreter", function() {
 
       it("returns message for an empty stack and length stays at 0.", function() {
         result = itp.interpret('.s');
-        expect(result.data.pop()).toBe('[stack empty]');
+        expect(result.data.pop()).toBe('[data stack empty]');
       });
 
     });
@@ -302,7 +306,7 @@ describe("The Interpreter", function() {
     describe("CREATE", function() {
 
       it("it creates a new CustomCommand", function() {
-        result = itp.interpret('word spoon create .s');
+        result = itp.interpret('create spoon .s');
         expect(result.stackSize).toEqual(0);
         expect(itp.newCommands.current()).toBeDefined();
       });
@@ -348,14 +352,14 @@ describe("The Interpreter", function() {
 
       it("updates dictionaryHead.", function() {
         var oldDictionaryHead = itp.dictionaryHead;
-        itp.interpret("word aaa create");
+        itp.interpret("create aaa");
         expect(oldDictionaryHead).toEqual(itp.dictionaryHead);
         itp.interpret("} ;");
         expect(oldDictionaryHead).not.toEqual(itp.dictionaryHead);
       });
 
       it("creates a findable item in the dictionary.", function() {
-        itp.interpret('word newby create ;');
+        itp.interpret('create newby ;');
         result = itp.interpret('word newby find .l');
         expect(result.pop()).toBe(1);
       });
@@ -443,6 +447,10 @@ describe("The Interpreter", function() {
         expectResult('7 fn{ dup + } exec .', 14);
       });
 
+      it("can create an empty function", function() {
+        expectResult('9 fn{ } exec .', 9);
+      });
+
     });
 
     describe("EXEC function", function() {
@@ -460,8 +468,6 @@ describe("The Interpreter", function() {
       });
 
     });
-
-
 
   });
 
@@ -510,6 +516,12 @@ describe("The Interpreter", function() {
       result = itp.interpret('{ a 17 } dup object? . .');
       expect(result.data[0]).toBe(true);
       expect(result.data[1]).toEqual({ a: 17 });
+    });
+
+    it("can have can accept a range of datatypes set in pairs", function() {
+      result = itp.interpret('{ a 17 jeff koons bill bailey } dup object? . .');
+      expect(result.data[0]).toBe(true);
+      expect(result.data[1]).toEqual({ a: 17, bill: 'bailey', jeff: 'koons' });
     });
 
     it("throws an error if there an odd number of keys+values", function() {

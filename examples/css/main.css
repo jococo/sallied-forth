@@ -1,0 +1,22 @@
+body {
+  padding: 40px;
+  font-family: "Helvetica Neue", arial, sans-serif;
+  color: #225;
+}
+
+ul {
+  padding: 0;
+  margin: 0;
+}
+
+ul li {
+  list-style-type: none;
+}
+
+.menubar li {
+  display: inline-block;
+}
+.menubar li a {
+  text-decoration: none;
+  padding-right: 40px;
+}

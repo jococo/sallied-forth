@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <title>Dimple 1</title>
+    <link rel="stylesheet" href="../css/main.css">
+  </head>
+  <body>
+    <ul class="menubar">
+      <li><a href="/build/">Main REPL</a></li>
+      <li><a href="/tests/">Tests &amp; REPL</a></li>
+      <li><a href="/examples/">Examples</a></li>
+    </ul>
+    <h1>Charting</h1>
+    <h2>Charts using a third party library dimple.js</h2>
+
+    <h3>js-ex1</h3>
+    <p>JavaScript example 1</p>
+    <div class="js-ex1"></div>
+
+    <h3>4th-ex1</h3>
+    <p>Forth example 1</p>
+    <div class="fth-ex1"></div>
+
+    <script src="../js/d3.v3.min.js"></script>
+    <script src="../js/dimple.v2.1.2.js"></script>
+<!--    <script src="/build/js/salliedforth.min.js"></script> -->
+    <script src="/tests/js/salliedforth.js"></script>
+    <script>
+      var svg = dimple.newSvg(".js-ex1", 600, 400);
+      var data = [
+        { "Word":"Hello", "Awesomeness":2000 },
+        { "Word":"World", "Awesomeness":3000 }
+      ];
+      var chart = new dimple.chart(svg, data);
+      chart.addCategoryAxis("x", "Word");
+      chart.addMeasureAxis("y", "Awesomeness");
+      chart.addSeries(null, dimple.plot.bar);
+      chart.draw();
+    </script>
+
+
+    <script type="text/forth" id="forth-ex1">
+      " .fth-ex1" 600 400 3 arity js- dimple.newSvg
+      [
+        { Word Hello Awesomeness 2000 }
+        { Word World Awesomeness 3000 }
+        { Word Jellyfish Awesomeness 1000 }
+        { Word Frankenstein Awesomeness 1800 }
+      ]
+      arity2 jsnew dimple.chart
+      get addCategoryAxis [ x Word ] jsexec
+      get addMeasureAxis [ y Awesomeness ] jsexec
+      get addSeries null word dimple.plot.bar @ arity2 jsexec
+      get draw [] jsexec
+    </script>
+
+    <script>
+      var interpreter = new salliedforth.Interpreter(window);
+      var text = document.getElementById('forth-ex1').text;
+      var result = interpreter.interpret(text);
+    </script>
+
+  </body>
+</html>

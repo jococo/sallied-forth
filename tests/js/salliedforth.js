@@ -140,6 +140,7 @@
     this.data = [];
     this.status = status;
     this.stackSize = 0;
+    this.returnStackSize = 0;
   };
 
   ResponseData.prototype.push = function(item) {
@@ -180,7 +181,7 @@
     this.version = {
       major: 0,
       minor: 0,
-      build: 1,
+      build: 2,
       revision: undefined
     };
     this.versionString = ''+
@@ -211,10 +212,32 @@
     };
 
     this.popFromDataStack = function() {
-      if(self.dataStack.length < 1) { self.error("StackUnderFlow!"); }
+      if(self.dataStack.length < 1) { self.error("DataStackUnderFlow!"); }
       return self.dataStack.pop();
     };
 
+    this.pushToReturnStack = function() {
+      var args = Array.prototype.slice.call(arguments);
+      args.forEach( function(item) {
+        self.returnStack.push(item);
+      } );
+    };
+
+    this.popFromReturnStack = function() {
+      if(self.returnStack.length < 1) { self.error("ReturnStackUnderFlow!"); }
+      return self.returnStack.pop();
+    };
+
+
+    /**
+     * Add a new word to the main dictionary.
+     * dictionaryHead is a pointer to the head of a linked list.
+     * new definitions are added to the head of this list so the word search favours newest first.
+     *
+     * name - String
+     * fn - javascript function
+     * imm - boolean, is this an immediate mode word? i.e. runs immediately when processing.
+     */
     this.addToDictionary = function( name, fn, imm ) {
       if( self.dictionaryHead ) {
         var newNode = {name: name, fn: fn, prev: self.dictionaryHead, immediate: !!imm};
@@ -364,6 +387,7 @@
       self.processCommands();
 
       self.response.stackSize = self.dataStack.length;
+      self.response.returnStackSize = self.returnStack.length;
       return self.response;
     };
 
@@ -406,9 +430,17 @@
       */
     this.addToDictionary('.s', function() {
       if( self.dataStack.length < 1 ) {
-        self.log('[stack empty]');
+        self.log('[data stack empty]');
       } else {
         self.log( self.dataStack );
+      }
+    });
+
+    this.addToDictionary('.rs', function() {
+      if( self.returnStack.length < 1 ) {
+        self.log('[return stack empty]');
+      } else {
+        self.log( self.returnStack );
       }
     });
 
@@ -422,6 +454,53 @@
 
     this.addToDictionary('.log', function() {
       console.log( self.dataStack );
+    });
+
+    /**
+     * Return Stack functions
+     */
+
+    // Takes a value off the parameter stack and pushes it onto the return stack.
+    // ( n -- )
+    this.addToDictionary('>R', function() {
+      var val = self.popFromDataStack();
+      self.pushToReturnStack(val);
+    });
+
+    // Takes a value off the return stack and pushes it onto the parameter stack.
+    // ( -- n )
+    this.addToDictionary('R>', function() {
+      var val = self.popFromReturnStack();
+      self.pushToDataStack(val);
+    });
+
+    // Copies the top of the return stack without affecting it.
+    // ( -- n )
+    this.addToDictionary('R@', function() {
+      var val = self.popFromReturnStack();
+      if( val ) {
+        self.pushToReturnStack( val );
+        self.pushToDataStack( val );
+      }
+    });
+
+        // Copies the top of the return stack without affecting it.
+    // ( -- n )
+    this.addToDictionary('I', function() {
+      var val = self.popFromReturnStack();
+      if( val ) {
+        self.pushToReturnStack( val );
+        self.pushToDataStack( val );
+      }
+    });
+
+    // Copies the third item of the return stack without affecting it.
+    // ( -- n )
+    this.addToDictionary('J', function() {
+      var rsLen = self.returnStack.length;
+      if( rsLen < 3) { self.error("J needs 3 items on the return stack. There were only " + rsLen); }
+      var val = self.returnStack[ rsLen - 3 ]; // JS array is zero indexed.
+      self.pushToDataStack( val );
     });
 
     this.addToDictionary('dup', function() {
@@ -462,6 +541,43 @@
       }
     });
 
+/*
+    // Pushes the loop index and loop limit onto the return stack.
+    // ( n1 n2 -- )
+    this.addToDictionary('do', function() {
+      this.interpret('swap >R >R');
+      self.newCommands.push( new CustomCommand( "Anonymous", undefined, self ) );
+      this.enterCompilationMode();
+    });
+
+    this.addToDictionary('loop', function() {
+      self.leaveCompilationMode();
+      if( self.newCommands.current() ) {
+        var latest = self.newCommands.pop();
+
+
+
+        // if nested then add this to the parent
+        if( self.newCommands.current() && self.compilationMode() ) {
+          self.newCommands.addToCurrent( self.popFromDataStack() );
+        }
+      }
+    }, true);
+
+    // Increments the loop index by 1 and tests against the upper limit. If the loop index is equal to the limit, discard the loop parameters and continue execution immediately following the loop. Otherwise continue execution at the beginning of the loop.
+    // ( -- )
+this.addToDictionary('loop', function() {
+      var loopIndex = this.popFromReturnStack();
+      var loopLimit = this.popFromReturnStack();
+      loopIndex = loopIndex + 1;
+      if(loopIndex < loopLimit) {
+        this.pushToReturnStack( loopLimit );
+        this.pushToReturnStack( loopIndex );
+      } else {
+
+      }
+    });
+*/
     // JS Interop TODO does this need to go later, e.g. if we use the Maths functions?
 
     // TODO commenting these out for now.
@@ -510,7 +626,11 @@
         self.executeWords('word');
         var key = self.popFromDataStack();
         self.pushToDataStack(obj);
-        self.pushToDataStack( pathRecur( key.split('.'), obj ) );
+        var val = pathRecur( key.split('.'), obj );
+        if((typeof val) === 'function') {
+          val = addMetaData(val, {context: obj});
+        }
+        self.pushToDataStack( val );
       }
     });
 
@@ -602,9 +722,69 @@
       }
     }, true);
 
+    /*
+    Pass in a 'class' function and an array of args.
+    This function will create a new instance, injecting the args as parameters.
+    */
+    function construct(constructor, args) {
+      function F() {
+          return constructor.apply(this, args);
+      }
+      F.prototype = constructor.prototype;
+      return new F();
+    }
+
+    /*
+      Adds a 'getMetaData' function to the passed in inst
+      which returns the supplied metadata(meta).
+    */
+    function addMetaData(inst, meta) {
+      inst.getMetaData = function() {
+        return meta;
+      };
+      return inst;
+    }
+
+    this.addToDictionary('jsnew', function() {
+      var fn;
+      self.executeString('word @'); // get the js fn name, find it from the js context
+      fn = self.popFromDataStack();
+      var args = self.popFromDataStack();
+      var result = construct(fn, args);
+      self.pushToDataStack(result);
+    });
+
+    /*
+    run a javascript function off of the stack
+    args is top of stack because this function is generally used to execute a fetched js func
+    */
+    // ( fn [args] -- )
+    this.addToDictionary('jsexec', function() {
+      var args = self.popFromDataStack();
+      var fn = self.popFromDataStack();
+      var meta = fn.getMetaData();
+      if(meta && meta.context) {
+        fn.apply(meta.context, args);
+      } else {
+        fn.apply(null, args);
+      }
+    });
+
+    /*
+    run a javascript function off of the stack, push result
+    args is top of stack because this function is generally used to execute a fetched js func
+    */
+    // ( fn [args] -- r )
+    this.addToDictionary('jsexec-', function() {
+      var args = self.popFromDataStack();
+      var fn = self.popFromDataStack();
+      var result = fn.apply(null, args);
+      self.pushToDataStack( result );
+    });
+
     this.addToDictionary('arity', function() {
       var len = self.popFromDataStack();
-      var result = [];
+      var result = addMetaData([], {arity: len});
       while( len-- ) {
         result.unshift( self.popFromDataStack() );
       }
@@ -650,6 +830,16 @@
       } else {
         var val2 = self.popFromDataStack();
         self.pushToDataStack( val1 === val2 );
+      }
+    });
+
+    this.addToDictionary('>', function() {
+      var val1 = self.popFromDataStack();
+      if( self.dataStack.length < 1) {
+        self.error("2 items needed for > !");
+      } else {
+        var val2 = self.popFromDataStack();
+        self.pushToDataStack( val2 > val1 );
       }
     });
 
@@ -790,11 +980,15 @@
       // if(self.newCommands) {
       //   self.error('Already compiling ' + self.newCommands.name + '!');
       // }
-      if( self.dataStack.length > 0) {
-        // get the object ready
-        var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self );
-        self.newCommands.push( cmd );
-        return;
+      var nextWord = self.commands.shift();
+      if(nextWord) {
+        self.pushToDataStack(nextWord);
+        if( self.dataStack.length > 0) {
+          // get the object ready
+          var cmd = new CustomCommand( self.popFromDataStack(), self.dictionaryHead, self );
+          self.newCommands.push( cmd );
+          return;
+        }
       }
       self.error("CREATE needs a name.");
     });
@@ -853,9 +1047,31 @@
     }, true);
 
     this.addToDictionary(':', function() {
-      self.executeWords('word', 'create'); // , 'fn{');
+      self.executeWords('create'); // 'word',
       self.enterCompilationMode();
     });
+
+    /**
+     * Flow Control
+     */
+
+     /*
+      DO ... LOOP will work a little differently to native Forth implementations.
+      DO adds the loop index and limit but then enters compilation mode.
+      LOOP retrieves the function wrapper around the code between DO & LOOP and sets up a function to repeatedly call it.
+     */
+
+    this.addToDictionary('do', function() {
+      debugger;
+      self.interpret('swap >R >R');
+      self.newCommands.push( new CustomCommand( "Anonymous", undefined, self ) );
+      self.enterCompilationMode(); // ->C
+    });
+
+    this.addToDictionary('loop', function() {
+      debugger;
+      self.interpret('} R> inc >R');
+    }, true);
 
     // Defining Arrays
 
@@ -879,6 +1095,14 @@
 
     this.addToDictionary('{}', function() {
       self.pushToDataStack({});
+    });
+
+    this.addToDictionary('undefined', function() {
+      self.pushToDataStack(void 0);
+    });
+
+    this.addToDictionary('null', function() {
+      self.pushToDataStack(null);
     });
 
     // call a function given the JS PATH

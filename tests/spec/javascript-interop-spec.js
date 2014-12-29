@@ -39,6 +39,13 @@ describe("JavaScript interoperability", function() {
       }
     };
 
+    this.Thing = function(a, b) {
+      this.name = a;
+      this.num = b;
+    };
+
+    this.Object = Object;
+
     // nested access (within arrays, objects, functions)
   };
 
@@ -60,6 +67,45 @@ describe("JavaScript interoperability", function() {
 
 
   describe("from Sallied-Forth", function() {
+
+    describe('native JS objects', function() {
+      it('can create an empty array', function() {
+        jsResult = forthInt.interpret('[] .');
+        var val = jsResult.pop();
+        expect(Array.isArray(val)).toBeTruthy();
+        expect(val.length).toBe(0);
+      });
+      it('can create an empty Object', function() {
+        jsResult = forthInt.interpret('{} .');
+        var val = jsResult.pop();
+        expect(val).toEqual({});
+        expect(typeof val).toEqual("object");
+      });
+      it('can create a null', function() {
+        jsResult = forthInt.interpret('null .');
+        var val = jsResult.pop();
+        expect(val).toBe(null);
+      });
+      it('can create an undefined', function() {
+        jsResult = forthInt.interpret('undefined .');
+        var val = jsResult.pop();
+        expect(val).toBe(undefined);
+      });
+    });
+
+    describe('creating new JS objects', function() {
+      it('can instantiate a new empty Object', function() {
+        jsResult = forthInt.interpret('[] jsnew Object .');
+        var item = jsResult.pop();
+        expect(item).toEqual({});
+      });
+      it('can instantiate a new function with parameters', function() {
+        jsResult = forthInt.interpret('" help" 3 arity2 jsnew Thing .');
+        var item = jsResult.pop();
+        expect(item.name).toEqual('help');
+        expect(item.num).toEqual(3);
+      });
+    });
 
     describe("getting JS properties", function() {
       it("can get integers", function() {
@@ -87,6 +133,21 @@ describe("JavaScript interoperability", function() {
 
       it("throws an error if property doesn't exist", function() {
         expectThrow("word jabberwocky729 @");
+      });
+    });
+
+    describe('GET', function() {
+      it('can retrieve an integer', function() {
+        jsResult = forthInt.interpret('word rootDomain @ get count .');
+        expect(jsResult.pop()).toBe(99);
+      });
+      it('can retrieve a string', function() {
+        jsResult = forthInt.interpret('word rootDomain @ get title .');
+        expect(jsResult.pop()).toBe('awesome!');
+      });
+      it('can retrieve a function', function() {
+        jsResult = forthInt.interpret('word rootDomain @ get runIt [ help ] jsexec- .');
+        expect(jsResult.pop()).toBe('returning. help');
       });
     });
 
@@ -127,8 +188,7 @@ describe("JavaScript interoperability", function() {
     describe("calling JS functions", function() {
 
       it("can call js functions with no params no return value", function() {
-        jsResult = forthInt.interpret('rootCountInc');
-        // expect(jsResult.pop()).toBe('Hello from Root!');
+        jsResult = forthInt.interpret('rootCountInc'); // no return
         jsResult = forthInt.interpret('word rootCount @ .l .');
         expect(jsResult.data).toEqual([1,24]);
       });
