@@ -1,5 +1,7 @@
 # salliedforth.js
 
+[![Build Status](https://travis-ci.org/jococo/sallied-forth.svg?branch=master)](https://travis-ci.org/jococo/sallied-forth)
+
 A non-legal version of Forth.
 
 See http://jococo.github.io/sallied-forth/ for some explanation and to try the live, in-browser REPL.
