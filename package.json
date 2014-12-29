@@ -4,9 +4,13 @@
   "description": "Great big Forth for JavaScript",
   "author": "Joc",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jococo/sallied-forth.git"
+  },
   "main": "salliedforth.js",
   "scripts": {
-    "test": "test",
+    "test": "./node_modules/.bin/karma start --single-run --browsers PhantomJS",
     "start": "ws"
   },
   "keywords": [
@@ -19,6 +23,7 @@
     "grunt-contrib-copy": "~0.5.0",
     "grunt-contrib-uglify": "~0.2.7",
     "grunt-contrib-watch": "~0.5.3",
-    "local-web-server": "^0.5.15"
+    "local-web-server": "^0.5.15",
+    "karma": "~0.8"
   }
 }

@@ -413,6 +413,10 @@
     // Definitions
     // ---------------------------------
 
+    this.addToDictionary('log', function() {
+      console.log(self.popFromDataStack());
+    });
+
     this.addToDictionary('.', function() {
       self.log( self.popFromDataStack() );
     });
