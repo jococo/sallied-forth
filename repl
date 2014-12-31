@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+rlwrap node repl.js

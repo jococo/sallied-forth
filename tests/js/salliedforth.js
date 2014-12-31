@@ -38,6 +38,16 @@
     return obj === Object(obj);
   }
 
+  /**
+   * CustomCommand
+   *
+   * handles the execution of cutom forth words from the stack or vocabulary.
+   *
+   * @param name String
+   * @param prev CustomCommand, the top of the current vocab
+   * @scope ??
+   * errorFn Function for custom error handling
+   */
   var CustomCommand = function( name, prev, scope, errorFn ) {
     var self = this;
     this.name = name;
@@ -64,6 +74,14 @@
       }
     };
     this.executeAfterCreation = false;
+  };
+
+  CustomCommand.prototype.getMetaData = function() {
+    return { type: 'CustomCommand' };
+  };
+
+  CustomCommand.prototype.apply = function(ctx, args) {
+    return this.fn.apply(ctx, args);
   };
 
   var ArrayCommand = function( scope ) {
@@ -457,7 +475,7 @@
     });
 
     this.addToDictionary('.log', function() {
-      console.log( self.dataStack );
+      console.log.apply( console, ["STACK >>"].concat( self.dataStack.map(function(cell) {return cell.toString()}) ) );
     });
 
     /**
@@ -735,6 +753,11 @@ this.addToDictionary('loop', function() {
           return constructor.apply(this, args);
       }
       F.prototype = constructor.prototype;
+      if(args.length < 1) {
+        F.prototype.toString = function() {return '[' + constructor.cname + '()]'};
+      } else {
+        F.prototype.toString = function() {return '[' + constructor.cname + '(' + args + ')]'};
+      }
       return new F();
     }
 
@@ -751,8 +774,9 @@ this.addToDictionary('loop', function() {
 
     this.addToDictionary('jsnew', function() {
       var fn;
-      self.executeString('word @'); // get the js fn name, find it from the js context
+      self.executeString('word dup @'); // get the js fn name, find it from the js context
       fn = self.popFromDataStack();
+      fn.cname = self.popFromDataStack();
       var args = self.popFromDataStack();
       var result = construct(fn, args);
       self.pushToDataStack(result);
@@ -766,7 +790,7 @@ this.addToDictionary('loop', function() {
     this.addToDictionary('jsexec', function() {
       var args = self.popFromDataStack();
       var fn = self.popFromDataStack();
-      var meta = fn.getMetaData();
+      var meta = fn.getMetaData && fn.getMetaData();
       if(meta && meta.context) {
         fn.apply(meta.context, args);
       } else {

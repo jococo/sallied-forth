@@ -14,6 +14,52 @@ By non-legal I mean it doesn't strictly follow any Forth standard. The intention
 
 As mentioned, this was intended to utilize Asm.js for mega speed, but I am considering other paths..
 
+## Quick start
+
+Either clone this git repository with:
+
+  git checkout https://github.com/jococo/sallied-forth.git
+
+or clone it with the github application.
+
+You will find a full, minified version of salliedforth.min.js in the directory `build/js/`
+
+### A simple web server
+
+In the root folder, froma terminal, run the command:
+
+  npm install
+
+And, when this has finished, type
+
+  npm start
+
+To launch the `local-web-server` app from NPM. Then visit
+
+  http://localhost:8000/
+
+in a web browser. This will initially show you a listing of the files and folders in the root of your project. Click on the 'examples' folder and you will be taken to the local web pages that demonstrate some example code. Also you can access a web based repl and run the Jasmine unit tests for the project (They only take a few seconds to run.)
+
+### Opening a REPL
+
+Type the `repl` command into terminal or command line as so:
+
+`./repl
+
+This allows you to interactively enter forth words and see the results immediately.
+
+Please  note: the `repl` command use `rlwrap` available from:
+
+https://github.com/hanslub42/rlwrap
+
+to give more modern console usage such as history and keyboard navigation. Enter `ctrl+c` to exit the repl.
+
+At this time I have produced a Windows version of the repl. This shouldn't be difficult and will be created when I am next near a Windows pc. For now, you should be able to run:
+
+  node repl.js
+
+although I haven't tested this for Windows compatibility yet.
+
 ## Design decisions
 
 * lowercase words NO SHOUTING!!
