@@ -1,4 +1,3 @@
-
 export class ObjectCommand {
   _data: { [key: string]: any; };
   fn: () => void;

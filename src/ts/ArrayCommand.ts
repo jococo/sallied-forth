@@ -1,4 +1,3 @@
-
 export class ArrayCommand {
   _data: any[];
   fn: () => void;

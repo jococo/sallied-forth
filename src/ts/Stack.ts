@@ -1,4 +1,3 @@
-
 export class Stack {
   name: string;
   _stack: any[];

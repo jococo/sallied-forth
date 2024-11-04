@@ -1,4 +1,3 @@
-
 export function mergeIn(obj1: any, obj2: any) {
     for (const attrname in obj2) {
         if (obj2.hasOwnProperty(attrname)) {
@@ -8,7 +7,9 @@ export function mergeIn(obj1: any, obj2: any) {
         }
     }
     return obj1;
-}export function pathRecur(pth: string[], str: any) {
+}
+
+export function pathRecur(pth: string[], str: any) {
   if (pth.length > 0) {
     const nxt = pth.shift();
     const data = nxt !== undefined ? str[nxt] : undefined;
@@ -19,15 +20,18 @@ export function mergeIn(obj1: any, obj2: any) {
   }
   return str;
 }
+
 export function isObject(obj: any) {
   return obj === Object(obj);
 }
+
 export function addMetaData(inst: any, meta: any) {
   inst.getMetaData = function () {
     return meta;
   };
   return inst;
 }
+
 export function construct(constructor: any, args: any[]) {
   function F() {
     return constructor.apply(this, args);
@@ -44,4 +48,3 @@ export function construct(constructor: any, args: any[]) {
   }
   return new F();
 }
-
