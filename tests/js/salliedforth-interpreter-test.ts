@@ -1,9 +1,11 @@
+import { Interpreter } from '../../src/js/salliedforth';
+
 describe("The Interpreter", function() {
 
   var itp: any, result: any;
 
   beforeEach(function() {
-    itp = new salliedforth.Interpreter();
+    itp = new Interpreter();
   });
 
   function expectResult(inStr: string, out: any) {
@@ -46,7 +48,7 @@ describe("The Interpreter", function() {
   describe("Value Store", function() {
 
     beforeEach(function() {
-      itp = new salliedforth.Interpreter({aaa: {bbb: {ccc: -1999}}});
+      itp = new Interpreter({aaa: {bbb: {ccc: -1999}}});
     });
 
     it("returns undefined for values that haven't been set.", function() {

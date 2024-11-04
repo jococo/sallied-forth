@@ -1,4 +1,4 @@
-import { Interpreter } from 'salliedforth';
+import { Interpreter } from '../../src/js/salliedforth';
 
 describe("Flow Control", function() {
 

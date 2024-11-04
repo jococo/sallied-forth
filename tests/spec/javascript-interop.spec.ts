@@ -1,3 +1,5 @@
+import { Interpreter } from '../../src/js/salliedforth';
+
 describe("JavaScript interoperability", function() {
 
   // proxy class for JS communication
@@ -58,7 +60,7 @@ describe("JavaScript interoperability", function() {
 
   beforeEach(function () {
     jsWorld = new JSWorld();
-    forthInt = new salliedforth.Interpreter(jsWorld);
+    forthInt = new Interpreter(jsWorld);
   });
 
   function expectThrow(inStr: string) {
