@@ -1,23 +1,25 @@
+import { Interpreter } from '../../src/js/salliedforth';
 
 describe("Stack Manipulation", function() {
 
-  var itp, result;
+  let itp: Interpreter;
+  let result: any;
 
   beforeEach(function() {
-    itp = new salliedforth.Interpreter();
+    itp = new Interpreter();
   });
 
-  function expectResult( inStr, out ) {
+  function expectResult(inStr: string, out: any) {
     result = itp.interpret(inStr);
-    var resultFirst = result.pop();
-    if( Array.isArray( out ) || (out === Object(out)) ) {
+    const resultFirst = result.pop();
+    if (Array.isArray(out) || (out === Object(out))) {
       expect(resultFirst).toEqual(out);
     } else {
       expect(resultFirst).toBe(out);
     }
   }
 
-  function expectThrow( inStr ) {
+  function expectThrow(inStr: string) {
     result = function() {
       itp.interpret(inStr);
     };
@@ -116,4 +118,3 @@ describe("Stack Manipulation", function() {
   })
 
 })
-

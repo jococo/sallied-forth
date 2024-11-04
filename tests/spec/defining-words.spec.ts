@@ -1,17 +1,21 @@
+import { Interpreter } from '../../src/js/salliedforth';
+
 describe("Browser interop", function() {
 
-  var ini, r, ii;
+  let ini: Interpreter;
+  let r: any;
+  let ii: (input: string) => any;
 
   beforeEach(function() {
-    ini = new salliedforth.Interpreter( window );
-    ii = ini.interpret;
+    ini = new Interpreter(window);
+    ii = ini.interpret.bind(ini);
     r = null;
   });
 
   describe('CREATE', function() {
 
     it('takes the next word as input and adds to the dictionary', function() {
-      var dh = ini.dictionaryHead;
+      const dh = ini.dictionaryHead;
       r = ii('create frank');
       expect(ini.newCommands.current().name).not.toBe(dh.name);
     });

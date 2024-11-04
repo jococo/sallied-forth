@@ -1,9 +1,12 @@
+import { Interpreter } from '../../src/js/salliedforth';
+
 describe("Return Stack functions", function() {
 
-  var browserInt, bResult;
+  let browserInt: Interpreter;
+  let bResult: any;
 
   beforeEach(function() {
-    browserInt = new salliedforth.Interpreter( window );
+    browserInt = new Interpreter(window);
     bResult = null;
   });
 

@@ -1,10 +1,14 @@
+import { Interpreter } from '../../src/js/salliedforth';
+
 describe("Flow Control", function() {
 
-  var interpreter, bResult, context;
+  let interpreter: Interpreter;
+  let bResult: any;
+  let context: any;
 
   beforeEach(function() {
     context = {};
-    interpreter = new salliedforth.Interpreter( context );
+    interpreter = new Interpreter(context);
     bResult = null;
   });
 
@@ -12,10 +16,9 @@ describe("Flow Control", function() {
 
     xit('can perform a simple loop', function() {
       bResult = interpreter.interpret('5 0 do loop');
-      expect(context).toBe({hey: 'jude'});
+      expect(context).toEqual({hey: 'jude'});
     });
 
   });
-
 
 });
