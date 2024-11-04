@@ -1,22 +1,22 @@
 describe("The Interpreter", function() {
 
-  var itp, result;
+  var itp: any, result: any;
 
   beforeEach(function() {
     itp = new salliedforth.Interpreter();
   });
 
-  function expectResult( inStr, out ) {
+  function expectResult(inStr: string, out: any) {
     result = itp.interpret(inStr);
     var resultFirst = result.pop();
-    if( Array.isArray( out ) || (out === Object(out)) ) {
+    if (Array.isArray(out) || (out === Object(out))) {
       expect(resultFirst).toEqual(out);
     } else {
       expect(resultFirst).toBe(out);
     }
   }
 
-  function expectThrow( inStr ) {
+  function expectThrow(inStr: string) {
     result = function() {
       itp.interpret(inStr);
     };
@@ -51,38 +51,38 @@ describe("The Interpreter", function() {
 
     it("returns undefined for values that haven't been set.", function() {
       var name = "boff";
-      result = itp.getValue( name );
+      result = itp.getValue(name);
       expect(result).not.toBeDefined();
     });
 
     it("can set and get integer values.", function() {
       var name = "boff1";
-      itp.setValue( name, -99 );
-      result = itp.getValue( name );
-      expect(result).toBe( -99 );
+      itp.setValue(name, -99);
+      result = itp.getValue(name);
+      expect(result).toBe(-99);
     });
 
     it("can set and get string values.", function() {
       var name = "boff2";
-      itp.setValue( name, "Hallelujah!" );
-      result = itp.getValue( name );
-      expect(result).toBe( "Hallelujah!" );
+      itp.setValue(name, "Hallelujah!");
+      result = itp.getValue(name);
+      expect(result).toBe("Hallelujah!");
     });
 
     it("can set and get complex values.", function() {
       var name = "boff3";
-      itp.setValue( name, {a: "help", c: 3.1} );
-      result = itp.getValue( name );
-      expect(result).toEqual( {a: "help", c: 3.1} );
+      itp.setValue(name, {a: "help", c: 3.1});
+      result = itp.getValue(name);
+      expect(result).toEqual({a: "help", c: 3.1});
     });
 
     it("can reach into nested objects", function() {
       var name = "aaa.bbb.ccc";
-      result = itp.getValue( name );
-      expect(result).toEqual( -1999 );
-      result = itp.setValue( name, 2001 );
-      result = itp.getValue( name );
-      expect(result).toEqual( 2001 );
+      result = itp.getValue(name);
+      expect(result).toEqual(-1999);
+      result = itp.setValue(name, 2001);
+      result = itp.getValue(name);
+      expect(result).toEqual(2001);
     });
 
   });
@@ -158,7 +158,7 @@ describe("The Interpreter", function() {
 
     it("can print out it's contents.", function() {
       result = itp.interpret('17 word frank .s');
-      expect(result.data[0]).toEqual([17,"frank"]);
+      expect(result.data[0]).toEqual([17, "frank"]);
     });
 
     // . function, shows the top item on the stack
@@ -180,7 +180,7 @@ describe("The Interpreter", function() {
 
       it("returns all the items.", function() {
         result = itp.interpret('1 2 3 99 .s');
-        expect(result.data[0]).toEqual([1,2,3,99]);
+        expect(result.data[0]).toEqual([1, 2, 3, 99]);
       });
 
       it("returns message for an empty stack and length stays at 0.", function() {
@@ -279,22 +279,22 @@ describe("The Interpreter", function() {
 
     });
 
-    describe( "! function", function() {
+    describe("! function", function() {
 
       it("stores an integer value by name (value, name)", function() {
         result = itp.interpret("87 word speed ! .l");
-        expect( result.pop() ).toBe(0); // stack length 0
-        expect( itp.valueStore['speed'] ).toEqual(87); // only reach into valueStore for tests.
+        expect(result.pop()).toBe(0); // stack length 0
+        expect(itp.valueStore['speed']).toEqual(87); // only reach into valueStore for tests.
       });
 
     });
 
-    describe( "@ function", function() {
+    describe("@ function", function() {
 
       it("retieves an integer value by name", function() {
         itp.interpret("10102 word pressure !");
         result = itp.interpret("word pressure @ .");
-        expect( result.pop() ).toBe(10102);
+        expect(result.pop()).toBe(10102);
       });
 
       it("throws an error if stack is empty", function() {
@@ -391,7 +391,7 @@ describe("The Interpreter", function() {
 
       it("creates a findable word.", function() {
         itp.interpret(': cuckoo ;');
-        var result2;
+        var result2: any;
         result = function() {
           result2 = itp.interpret("word cuckoo find .");
         };
@@ -435,7 +435,7 @@ describe("The Interpreter", function() {
     it("calling the redefined word in the definition should succeed.", function() {
       itp.interpret(': anum 333 ;');
       itp.interpret(': anum anum 222 ;');
-      expectResult('anum .s', [333,222]);
+      expectResult('anum .s', [333, 222]);
     });
   });
 
@@ -461,9 +461,9 @@ describe("The Interpreter", function() {
 
     });
 
-    describe ("JS in anon function", function() {
+    describe("JS in anon function", function() {
       it("can be called", function() {
-        result = itp.interpret( 'fn{ [ hey! ] . } exec' );
+        result = itp.interpret('fn{ [ hey! ] . } exec');
         expect(result.pop()).toEqual(['hey!']);
       });
 
@@ -475,7 +475,7 @@ describe("The Interpreter", function() {
 
     it("are defined using '[' and ']'.", function() {
       result = itp.interpret('[ 1 2 3 ] .s');
-      expect(result.pop()).toEqual([[1,2,3]]);
+      expect(result.pop()).toEqual([[1, 2, 3]]);
       expect(result.stackSize).toBe(1);
     });
 
@@ -515,13 +515,13 @@ describe("The Interpreter", function() {
     it("can have properties set in pairs", function() {
       result = itp.interpret('{ a 17 } dup object? . .');
       expect(result.data[0]).toBe(true);
-      expect(result.data[1]).toEqual({ a: 17 });
+      expect(result.data[1]).toEqual({a: 17});
     });
 
     it("can have can accept a range of datatypes set in pairs", function() {
       result = itp.interpret('{ a 17 jeff koons bill bailey } dup object? . .');
       expect(result.data[0]).toBe(true);
-      expect(result.data[1]).toEqual({ a: 17, bill: 'bailey', jeff: 'koons' });
+      expect(result.data[1]).toEqual({a: 17, bill: 'bailey', jeff: 'koons'});
     });
 
     it("throws an error if there an odd number of keys+values", function() {
@@ -533,28 +533,28 @@ describe("The Interpreter", function() {
   describe("Nesting", function() {
 
     it("Arrays can be nested in Arrays", function() {
-      expectResult('[ 1 [ 2 ] 3 ] .', [1,[2],3]);
+      expectResult('[ 1 [ 2 ] 3 ] .', [1, [2], 3]);
     });
 
     it("Arrays can be nested in Arrays can be nested in Arrays", function() {
-      expectResult('[ 19 [ 1 [ 2 ] 3 ] 99 ] .', [ 19, [ 1, [ 2 ], 3 ], 99 ]);
+      expectResult('[ 19 [ 1 [ 2 ] 3 ] 99 ] .', [19, [1, [2], 3], 99]);
     });
 
     it("Arrays can be nested in Objects", function() {
-      expectResult('{ a [ 2 4 8 ] b -99 } .', { a: [ 2, 4, 8 ], b: -99 });
+      expectResult('{ a [ 2 4 8 ] b -99 } .', {a: [2, 4, 8], b: -99});
     });
 
     it("Objects can be nested in Objects", function() {
-      expectResult('{ a { c 48 } b -99 } .', { a: { c: 48 }, b: -99 });
+      expectResult('{ a { c 48 } b -99 } .', {a: {c: 48}, b: -99});
     });
 
     it("Objects can be nested in Objects can be nested in Objects", function() {
       expectResult('{ a { c 48 d { e 1000 } } b -99 } .',
-                   { a: { c: 48, d: { e: 1000 } }, b: -99 });
+        {a: {c: 48, d: {e: 1000}}, b: -99});
     });
 
     it("Objects can be nested in Arrays", function() {
-      expectResult('[ 2 4 { a -99 } 8 ] .', [ 2, 4, { a: -99 }, 8 ]);
+      expectResult('[ 2 4 { a -99 } 8 ] .', [2, 4, {a: -99}, 8]);
     });
 
     it("Array items are retrieved with get", function() {
@@ -570,7 +570,7 @@ describe("The Interpreter", function() {
 
     it("Array items can be added with push", function() {
       result = itp.interpret("[ a b c ] 89 push .");
-      expect(result.pop()).toEqual([ 'a', 'b', 'c', 89 ]);
+      expect(result.pop()).toEqual(['a', 'b', 'c', 89]);
     });
 
     it("Last Array item can be fetched with pop", function() {
