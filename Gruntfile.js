@@ -56,13 +56,21 @@ module.exports = function(grunt) {
           debounceDelay: 250
         }
       }
+    },
+    jest: {
+      options: {
+        coverage: true,
+        testPathPattern: /tests\/.*-spec\.ts$/
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-jest');
 
   grunt.registerTask('default', ['uglify']);
   grunt.registerTask('build', ['uglify', 'copy:build', 'copy:test']);
+  grunt.registerTask('test', ['jest']);
 };
