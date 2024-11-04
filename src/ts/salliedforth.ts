@@ -1,3 +1,8 @@
+import { Interpreter } from "./Interpreter";
+
+
+const world: any = {}; // Replace with the appropriate value for 'world'
+const interpreter = new Interpreter(world);
 (function(exports){
   "use strict";
 
