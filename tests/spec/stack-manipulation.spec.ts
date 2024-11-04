@@ -1,4 +1,4 @@
-import { Interpreter } from '../js/salliedforth';
+import { Interpreter } from '../../src/js/salliedforth';
 
 describe("Stack Manipulation", function() {
 

@@ -1,12 +1,12 @@
-import { salliedforth } from 'salliedforth';
+import { Interpreter } from '../../src/js/salliedforth';
 
 describe("Browser interop", function() {
 
-  let browserInt: salliedforth.Interpreter;
+  let browserInt: Interpreter;
   let bResult: any;
 
   beforeEach(function() {
-    browserInt = new salliedforth.Interpreter(window);
+    browserInt = new Interpreter(window);
     bResult = null;
   });
 
@@ -49,11 +49,11 @@ describe("Browser interop", function() {
 
 describe("from JavaScript", function() {
 
-  let browserInt: salliedforth.Interpreter;
+  let browserInt: Interpreter;
   let bResult: any;
 
   beforeEach(function() {
-    browserInt = new salliedforth.Interpreter(window);
+    browserInt = new Interpreter(window);
     bResult = null;
   });
 
