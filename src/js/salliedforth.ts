@@ -1,3 +1,5 @@
+import { Interpreter } from "../ts/Interpreter";
+
 "use strict";
 
 /**

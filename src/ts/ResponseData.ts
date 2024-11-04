@@ -1,4 +1,3 @@
-
 export class ResponseData {
   data: any[];
   status: string;

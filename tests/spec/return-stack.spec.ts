@@ -1,4 +1,4 @@
-import { Interpreter } from '../../src/js/salliedforth';
+import { Interpreter } from '../../src/ts/Interpreter';
 
 describe("Return Stack functions", function() {
 
