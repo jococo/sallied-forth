@@ -11,6 +11,7 @@
   "main": "salliedforth.js",
   "scripts": {
     "test": "jest",
+    "build": "webpack --config webpack.config.js",
     "start": "ws"
   },
   "keywords": [
@@ -19,12 +20,10 @@
     "js"
   ],
   "devDependencies": {
-    "grunt": "latest",
-    "grunt-contrib-copy": "~0.5.0",
-    "grunt-contrib-uglify": "~0.2.7",
-    "grunt-contrib-watch": "~0.5.3",
-    "local-web-server": "^0.5.15",
     "jest": "^27.0.0",
-    "ts-jest": "^27.0.0"
+    "local-web-server": "^0.5.15",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^4.0.0"
   }
 }

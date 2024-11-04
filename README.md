@@ -28,11 +28,15 @@ You will find a full, minified version of salliedforth.min.js in the directory `
 
 ### A simple web server
 
-In the root folder, froma terminal, run the command:
+In the root folder, from a terminal, run the command:
 
     npm install
 
 And, when this has finished, type
+
+    npm run build
+
+To build the project using Webpack. Then type
 
     npm start
 
@@ -40,7 +44,7 @@ To launch the `local-web-server` app from NPM. Then visit
 
     http://localhost:8000/
 
-in a web browser. This will initially show you a listing of the files and folders in the root of your project. Click on the 'examples' folder and you will be taken to the local web pages that demonstrate some example code. Also you can access a web based repl and run the Jasmine unit tests for the project (They only take a few seconds to run.)
+in a web browser. This will initially show you a listing of the files and folders in the root of your project. Click on the 'examples' folder and you will be taken to the local web pages that demonstrate some example code. Also you can access a web based repl and run the Jest unit tests for the project (They only take a few seconds to run.)
 
 ### Opening a REPL
 
@@ -77,7 +81,7 @@ although I haven't tested this for Windows compatibility yet.
 
 ## Testing
 
-Tests are included and run from the main index.html page at present. This project uses the excellent Jasmine library.
+Tests are included and run from the main index.html page at present. This project uses the excellent Jest library.
 
 Most features have been developed with accompanying tests and they will be enhanced as the project evolves.
 
@@ -95,7 +99,7 @@ Most features have been developed with accompanying tests and they will be enhan
 - [x][ ][ ] loops or recursion or both
   *- [ ] is recursion possible?
 - [ ] decide whether to use JS version of truthy or nearer to Clojure/ClojureScript.
-- [ ] run test auto with Grunt
+- [ ] run test auto with npm scripts
 - [ ] REPL input needs history
 
 ## DONE
@@ -115,7 +119,7 @@ Most features have been developed with accompanying tests and they will be enhan
 - [x] result format will be: {data: [<array of values>...], status: TBD, stackLength: 1}, a JS class ResponseData, so that status codes can be standardised.
 - BREAKING CHANGES!! end
 - [x] Errors are thrown by default now, can be overriden by setting your own error function. [26/12/2013]
-- [x] Grunt build and test tags [26/12/2013]
+- [x] npm scripts build and test tags [26/12/2013]
 - [x] word definitions in forth at startup! [26/12/2013]
 - [x] comments [26/12/2013]
 - [x] anonymous functions? [26/12/2013]
