@@ -220,7 +220,7 @@ export class Interpreter {
     }
   }
 
-  interpret(txt: string) {
+  interpret(txt: string): ResponseData {
     this.response = new ResponseData('OK.');
     this.commands = txt.split(/\s+/).filter((str) => str.trim() !== '');
     this.processCommands();

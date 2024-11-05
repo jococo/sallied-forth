@@ -47,5 +47,51 @@ describe('Interpreter', () => {
                 immediate: true
             });
         });
+
+        it('should find an existing entry', () => {
+            interpreter.addToDictionary('test', jest.fn());
+            let resp = interpreter.interpret('test');
+            expect(resp).toEqual({
+                data: [],
+                returnStackSize: 0,
+                stackSize: 0,
+                status: 'OK.'
+            });
+        });
+        it('should find an existing entry', () => {
+            interpreter.addToDictionary('test', 
+                function() {
+                    interpreter.pushToDataStack(99);
+                });
+            let resp = interpreter.interpret('test');
+            expect(resp).toEqual({
+                data: [],
+                returnStackSize: 0,
+                stackSize: 1,
+                status: 'OK.'
+            });
+        });
+        it('should add up', () => {
+            interpreter.addToDictionary('+', 
+                function() {
+                    let a = interpreter.popFromDataStack();
+                    let b = interpreter.popFromDataStack();
+                    interpreter.pushToDataStack(a + b);
+                });
+            interpreter.addToDictionary('.',
+                function() {
+                    let a = interpreter.popFromDataStack();
+                    console.log(a);
+                });
+            debugger;
+            let resp = interpreter.interpret('1 2 +');
+            expect(resp).toEqual({
+                data: [],
+                returnStackSize: 0,
+                stackSize: 1,
+                status: 'OK.'
+            });
+            expect(interpreter.popFromDataStack()).toBe(3);
+        });
     });
 });
