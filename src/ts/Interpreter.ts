@@ -22,15 +22,15 @@ export class Interpreter {
   versionString: string;
   logFn: (item: any) => void;
   errorFn: (txt: string) => void;
-  response: ResponseData;
-  commands: string[];
+  response: ResponseData = new ResponseData('OK.');
+  commands: string[] = [];
 
   constructor(world: any) {
     this.dataStack = [];
     this.returnStack = [];
     this.dictionaryHead = undefined;
     this.newCommands = new CommandStack();
-    this._compilationModeStack = new Stack();
+    this._compilationModeStack = new Stack('CompilationMode Stack');
     this.valueStore = mergeIn(world || {}, { 'false': false, 'true': true });
     this.version = { major: 0, minor: 0, build: 2, revision: undefined };
     this.versionString = `${this.version.major}.${this.version.minor}.${this.version.build}`;
@@ -93,6 +93,13 @@ export class Interpreter {
     return this.returnStack.pop();
   }
 
+  /**
+   * Adds a new entry to the dictionary.
+   *
+   * @param name - The name of the dictionary entry.
+   * @param fn - The function associated with the dictionary entry.
+   * @param imm - Optional boolean indicating if the entry is immediate.
+   */
   addToDictionary(name: string, fn: () => void, imm?: boolean) {
     if (this.dictionaryHead) {
       const newNode = { name, fn, prev: this.dictionaryHead, immediate: !!imm };
@@ -173,7 +180,7 @@ export class Interpreter {
         throw new Error('Function ' + name + ' not found!');
       });
       this.executeFunctions(...allFunctions);
-    } catch (err) {
+    } catch (err:any) {
       this.error(err.message);
     }
   }
@@ -228,6 +235,18 @@ export class Interpreter {
 
   setErrorFunction(fn: (txt: string) => void) {
     this.errorFn = fn;
+  }
+
+  getJSContextFor(path: string) {
+    const pathArray = path.split('.');
+    let context = this.valueStore;
+    while (pathArray.length > 0) {
+      const key = pathArray.shift();
+      if (context && key) {
+        context = context[key];
+      }
+    }
+    return context;
   }
 
   addToDictionaryDefinitions() {
@@ -406,12 +425,12 @@ export class Interpreter {
         fn = this.popFromDataStack();
         fnPath = this.popFromDataStack();
         localContext = this.getJSContextFor(fnPath);
-        this.newCommands.addToCurrent((aFn, aPath, aContext) => {
+        this.newCommands.addToCurrent(((aFn:Function, aPath, aContext) => {
           return () => {
             const aArgs = this.popFromDataStack();
             aFn.apply(aContext, aArgs);
           };
-        }, (fn, fnPath, localContext));
+        }) (fn, fnPath, localContext));
       } else {
         const args = this.popFromDataStack();
         this.executeString('word dup @');
@@ -429,13 +448,13 @@ export class Interpreter {
         fn = this.popFromDataStack();
         fnPath = this.popFromDataStack();
         localContext = this.getJSContextFor(fnPath);
-        this.newCommands.addToCurrent((aFn, aPath, aContext) => {
+        this.newCommands.addToCurrent(((aFn, aPath, aContext) => {
           return () => {
             const aArgs = this.popFromDataStack();
             const aResult = fn.apply(aContext, aArgs);
             this.pushToDataStack(aResult);
           };
-        }, (fn, fnPath, localContext));
+        })(fn, fnPath, localContext));
       } else {
         const args = this.popFromDataStack();
         this.executeString('word dup @');
@@ -606,7 +625,7 @@ export class Interpreter {
 
     this.addToDictionary('!)?', () => {
       const str = this.commands.shift();
-      this.pushToDataStack(str.indexOf(')') < 0);
+      this.pushToDataStack(str ? str.indexOf(')') < 0 : false);
     });
 
     this.addToDictionary('not', () => {
@@ -634,11 +653,11 @@ export class Interpreter {
       txt = txt + cmd.split('"')[0];
       this.pushToDataStack(txt.trim());
       if (this.compilationMode()) {
-        this.newCommands.addToCurrent((newTxt) => {
+        this.newCommands.addToCurrent(((newTxt) => {
           return () => {
             this.pushToDataStack(newTxt);
           };
-        }, (this.popFromDataStack()));
+        }) (this.popFromDataStack()));
       }
     }, true);
 

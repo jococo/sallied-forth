@@ -33,8 +33,8 @@ export function addMetaData(inst: any, meta: any) {
 }
 
 export function construct(constructor: any, args: any[]) {
-  function F() {
-    return constructor.apply(this, args);
+  function F(this: any):void {
+    constructor.apply(this, args);
   }
   F.prototype = constructor.prototype;
   if (args.length < 1) {

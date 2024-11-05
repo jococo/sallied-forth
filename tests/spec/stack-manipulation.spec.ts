@@ -6,7 +6,7 @@ describe("Stack Manipulation", function() {
   let result: any;
 
   beforeEach(function() {
-    itp = new Interpreter();
+    itp = new Interpreter({});
   });
 
   function expectResult(inStr: string, out: any) {

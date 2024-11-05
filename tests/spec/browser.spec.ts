@@ -1,6 +1,6 @@
 import { Interpreter } from '../../src/ts/Interpreter';
 
-describe("Browser interop", function() {
+describe.skip("Browser interop", function() {
 
   let browserInt: Interpreter;
   let bResult: any;

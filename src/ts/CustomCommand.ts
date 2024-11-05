@@ -1,12 +1,14 @@
 export class CustomCommand {
   name: string;
-  fn: () => void;
+  fn: Function;
   errorFn: (txt: string) => void;
   prev: CustomCommand | undefined;
   functions: Array<() => void>;
   executeAfterCreation: boolean;
+  scope: any;
 
   constructor(name: string, prev: CustomCommand | undefined, scope: any, errorFn?: (txt: string) => void) {
+    this.scope = scope;
     this.name = name;
     this.fn = () => {
       this.functions.forEach((fn1) => {
@@ -34,7 +36,7 @@ export class CustomCommand {
       this.functions.push(fn2);
     } else {
       this.functions.push(() => {
-        scope.pushToDataStack((item: any) => item);
+        this.scope.pushToDataStack((item: any) => item);
       });
     }
   }
