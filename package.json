@@ -11,6 +11,7 @@
   "main": "salliedforth.js",
   "scripts": {
     "test": "jest",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "build": "webpack --config webpack.config.js",
     "start": "ws"
   },

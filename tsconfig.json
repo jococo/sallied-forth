@@ -4,7 +4,8 @@
         "target": "es6",
         "outDir": "./build",
         "strict": true,
-        "noImplicitAny": false
+        "noImplicitAny": false,
+        "sourceMap": true
     },
     "include": [
         "src/ts/**/*"

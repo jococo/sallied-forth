@@ -1,8 +1,16 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  // testMatch: ['**/tests/**/*.test.ts', '**/spec/**/*.spec.ts'],
-  // testMatch: ['**/tests/**/*.test.ts'],
-  testMatch: ['**/spec/**/maths.spec.ts'],
-  collectCoverage: true,
+  testMatch: ['**/tests/**/Interpreter.test.ts'],
+  collectCoverage: false,
+  // Enable source maps
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        sourceMap: true,
+        inlineSourceMap: true
+      }
+    ]
+  }
 };
